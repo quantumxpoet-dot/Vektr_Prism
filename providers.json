@@ -1,0 +1,64 @@
+{
+    "providers": [
+        {
+            "id": "gemini",
+            "name": "Google Gemini",
+            "urlPattern": "gemini.google.com",
+            "inputSelector": "[contenteditable='true'], [role='textbox'], .ql-editor, textarea",
+            "submitMethod": "enter",
+            "responseSelector": ".response-container model-response .markdown, .message-content, .model-response-text",
+            "waitMs": 5000,
+            "notes": "Works with gemini.google.com — uses contenteditable div"
+        },
+        {
+            "id": "chatgpt",
+            "name": "ChatGPT",
+            "urlPattern": "chatgpt.com",
+            "inputSelector": "#prompt-textarea, [contenteditable='true']",
+            "submitMethod": "enter",
+            "responseSelector": ".markdown.prose, [data-message-author-role='assistant'] .markdown",
+            "waitMs": 6000,
+            "notes": "Works with chatgpt.com"
+        },
+        {
+            "id": "claude",
+            "name": "Claude",
+            "urlPattern": "claude.ai",
+            "inputSelector": "[contenteditable='true'], .ProseMirror",
+            "submitMethod": "enter",
+            "responseSelector": ".font-claude-message .grid-cols-1 .markdown, [data-is-streaming] .markdown",
+            "waitMs": 6000,
+            "notes": "Works with claude.ai"
+        },
+        {
+            "id": "mistral",
+            "name": "Mistral Le Chat",
+            "urlPattern": "chat.mistral.ai",
+            "inputSelector": "textarea, [contenteditable='true']",
+            "submitMethod": "enter",
+            "responseSelector": ".prose, .message-content",
+            "waitMs": 5000,
+            "notes": "Works with chat.mistral.ai"
+        },
+        {
+            "id": "perplexity",
+            "name": "Perplexity",
+            "urlPattern": "perplexity.ai",
+            "inputSelector": "textarea, [contenteditable='true']",
+            "submitMethod": "enter",
+            "responseSelector": ".prose, .markdown-content",
+            "waitMs": 6000,
+            "notes": "Works with perplexity.ai"
+        },
+        {
+            "id": "generic",
+            "name": "Generic (Auto-detect)",
+            "urlPattern": "",
+            "inputSelector": "textarea, [contenteditable='true'], [role='textbox'], input[type='text']",
+            "submitMethod": "enter",
+            "responseSelector": ".markdown, .prose, .message-content, .response, .answer",
+            "waitMs": 6000,
+            "notes": "Fallback — tries common selectors on any chat page"
+        }
+    ]
+}
