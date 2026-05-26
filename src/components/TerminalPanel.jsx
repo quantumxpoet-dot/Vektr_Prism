@@ -1,23 +1,22 @@
 export default function TerminalPanel({ response, provider, isLoading, onConfirm, onClear, canConfirm }) {
+    // Don't render anything until the user has asked something
+    if (!response && !isLoading) return null;
+
     return (
         <div className="terminal-panel">
             <div className="terminal-header">
                 <div className="terminal-title">
                     <span className="dot" style={
-                        isLoading ? { background: 'var(--accent-warning)', boxShadow: '0 0 6px var(--accent-warning)' } :
-                            response ? {} : { background: 'var(--text-muted)', boxShadow: 'none' }
+                        isLoading
+                            ? { background: 'var(--accent-warning)', boxShadow: '0 0 6px var(--accent-warning)' }
+                            : {}
                     } />
                     <span>
-                        {isLoading ? 'AI Response (streaming...)' :
-                            response ? `AI Response — ${provider}` : 'AI Response'}
+                        {isLoading ? 'Waiting for AI...' : `AI Response — ${provider}`}
                     </span>
                 </div>
                 <div className="terminal-actions">
-                    <button
-                        className="clear-btn"
-                        onClick={onClear}
-                        disabled={!response && !isLoading}
-                    >
+                    <button className="clear-btn" onClick={onClear}>
                         Clear
                     </button>
                     <button
@@ -32,18 +31,9 @@ export default function TerminalPanel({ response, provider, isLoading, onConfirm
             </div>
 
             <div className="terminal-body">
-                {!response && !isLoading && (
-                    <span className="system-msg">
-                        {'> Ready. Select a file, type a prompt, and click "Ask AI".\n'}
-                        {'> The AI response will appear here.\n'}
-                        {'> Click "Confirm Change" to save the result to your file.\n'}
-                    </span>
-                )}
                 {isLoading && (
                     <span className="system-msg">
-                        {'> Sending prompt to '}
-                        <strong>{provider || 'AI'}</strong>
-                        {'...\n> Waiting for response...\n'}
+                        {'> Sending to '}<strong>{provider || 'AI'}</strong>{'...\n> Waiting for response...\n'}
                     </span>
                 )}
                 {response && (

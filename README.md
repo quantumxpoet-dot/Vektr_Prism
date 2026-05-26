@@ -1,81 +1,120 @@
-# VektrIDE
+# Vektr Prism
 
-A universal AI-powered IDE dashboard. Browse files, edit code with Monaco Editor, and talk to **any** AI chatbot (ChatGPT, Claude, Gemini, Mistral, etc.) — all from one interface.
+> **A free, agentic IDE powered by the AI chatbots you already use.**  
+> No API keys. No subscriptions. No downloads. Just open `vektrprism.site`.
 
-The Playwright bridge works at the DOM level: if you can chat with it in a browser, VektrIDE can automate it.
+---
 
-## Quick Start
+## The Problem
 
-```powershell
-# First time only:
-install.bat
+Every agentic IDE — Cursor, Copilot, Cline, Windsurf — charges you for AI access. Per-token billing. Monthly subscriptions. API keys you have to manage.
 
-# Every time:
-launch.bat
-# Then open http://localhost:3001
-```
+Meanwhile, **the best AI models in the world are free to use** through their own chat interfaces: ChatGPT, Claude, Gemini, Grok, DeepSeek, Meta AI, Perplexity — all have free tiers with frontier models.
+
+**Vektr Prism bridges the gap.** It turns those free chat interfaces into a full agentic coding environment.
+
+---
 
 ## How It Works
 
 ```
-Browser (React + Monaco)  →  Express API (:3001)  →  Playwright CDP  →  Any AI Tab
+vektrprism.site  →  Your Browser  →  Your AI Chatbot Tabs
+       ↕                                      ↕
+  File System Access API              Free AI (ChatGPT, Claude, Gemini, etc.)
+       ↕
+  Your Local Files
 ```
 
-1. Open Chrome with `--remote-debugging-port=9222`
-2. Navigate to any AI chatbot
-3. Open VektrIDE at `http://localhost:3001`
-4. Browse files → Edit → Ask AI → Confirm Change → Saved to disk
+1. Visit **vektrprism.site** — no install, no download
+2. Click **📂 Open Folder** — browser reads your local files directly
+3. Pick your AI chatbots during onboarding (multi-select)
+4. Code → Ask AI → apply changes → iterate
 
-## Project Structure
+**Zero cost. Zero setup. Zero API keys.**
 
-```
-VektrIDE/
-├── launch.bat          # Double-click to start
-├── install.bat         # First-time setup
-├── server.js           # Express API + static file server
-├── ide-backend.js      # Playwright bridge (provider-agnostic)
-├── providers.json      # AI provider config (add your own!)
-├── src/
-│   ├── main.jsx        # React entry
-│   ├── App.jsx         # Root layout + state
-│   ├── index.css       # Dark theme design system
-│   └── components/
-│       ├── Sidebar.jsx      # File explorer
-│       ├── Editor.jsx       # Monaco Editor wrapper
-│       ├── AskAIBar.jsx     # Prompt input + provider picker
-│       └── TerminalPanel.jsx # AI response + Confirm Change
-├── dist/               # Production build (auto-generated)
-├── package.json
-└── vite.config.js
-```
+---
 
-## Adding AI Providers
+## Why This Is Different
 
-Edit `providers.json` — no code changes needed:
+| Feature | Cursor / Copilot | Vektr Prism |
+|---------|-----------------|-------------|
+| Cost | $20–40/mo subscription | **Free** |
+| AI models | Locked to their list | **Any chatbot with a free tier** |
+| API keys | Required | **None needed** |
+| Install | Desktop app download | **Just open the website** |
+| NotebookLM | ❌ | ✅ Deep codebase understanding |
+| Custom GPTs / Gems | ❌ | ✅ Full access |
+| Conversation history | ❌ (each call is fresh) | ✅ (browser session persists) |
+| Add new AI provider | Wait for update | **You can add any chatbot** |
+| Privacy | Code sent to their servers | **Code never leaves your machine** |
 
-```json
-{
-  "id": "my-chatbot",
-  "name": "My Custom Chatbot",
-  "urlPattern": "mychatbot.com",
-  "inputSelector": "textarea",
-  "submitMethod": "enter",
-  "responseSelector": ".response",
-  "waitMs": 5000
-}
-```
+---
 
-## Development Mode
+## Supported AI Providers (All Free Tier)
 
-```powershell
-npm run dev       # Vite dev server with HMR (port 5173)
-npm run server    # Express API (port 3001)
-```
+| Provider | What you get free |
+|----------|-------------------|
+| **ChatGPT** | GPT-4o, custom GPTs |
+| **Claude** | Claude 3.5 Sonnet, Projects |
+| **Gemini** | Gemini 1.5 Pro, Gems |
+| **Grok** | Grok 2, real-time web |
+| **DeepSeek** | R1, V3 — fully free |
+| **Meta AI** | Llama 4 — fully free |
+| **Copilot** | GPT-4 via Microsoft — free |
+| **Perplexity** | AI search + reasoning |
+| **NotebookLM** | Codebase-grounded AI — free |
+| **Google AI Studio** | Gemini API playground — free |
 
-## Docs
+---
 
-- [Setup Guide](docs/SETUP.md)
-- [Architecture Wiki](docs/WIKI.md)
+## Features
+
+- **🔮 Browser-native IDE** — Monaco Editor, file explorer, syntax highlighting
+- **💬 AI Chat Panel** — prompt history, system context, diff preview
+- **🤖 Agent Mode** — PLAN → EXECUTE → VERIFY → ITERATE across files
+- **📂 Local File Access** — reads/writes your files via File System Access API
+- **📓 NotebookLM Integration** — one-click export for deep codebase analysis
+- **⌨️ Keyboard Shortcuts** — Ctrl+Enter (send), Ctrl+K (focus), ↑/↓ (history)
+- **🎨 Premium UI** — ambient light design, depth system, glassmorphism
+
+---
+
+## Quick Start
+
+1. Open **[vektrprism.site](https://vektrprism.site)** in Chrome/Edge
+2. Select your AI chatbots during onboarding
+3. Click **📂 Open Folder** to load your project
+4. Start coding with AI
+
+---
+
+## Modes
+
+**⚡ Manual** — Open a file, ask AI anything, review the response, apply changes. Full control.
+
+**🤖 Agent** — Describe a goal. The agent plans multi-file changes, executes them, and iterates on failures. Supervised or autonomous.
+
+---
+
+## Privacy
+
+- Your code **never leaves your machine** — File System Access API is browser-local
+- Your AI conversations stay in **your own browser sessions**
+- No telemetry, no analytics, no data collection
+- Vektr Prism is a static website — there is no backend server
+
+---
+
+## Tech Stack
+
+- **Frontend**: React + Monaco Editor + vanilla CSS
+- **File I/O**: File System Access API (Chrome 86+)
+- **AI Bridge**: Clipboard + cross-tab communication
+- **Hosting**: Cloudflare Pages (static)
+- **Persistence**: IndexedDB + localStorage
+- **Dependencies**: Zero server-side. Pure browser.
+
+---
 
 ## License
 

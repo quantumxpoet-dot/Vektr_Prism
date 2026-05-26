@@ -1,102 +1,94 @@
-# VektrIDE — Setup Guide
+# Vektr Prism — Setup Guide
 
-## Prerequisites
+## Requirements
 
-| Requirement | Version | Check |
-|-------------|---------|-------|
-| Node.js | v18+ (v22 LTS recommended) | `node --version` |
-| npm | v8+ | `npm --version` |
-| Chrome/Edge | Any modern version | — |
+- **Chrome or Edge** (version 86 or newer)
+- A free account on any supported AI chatbot (ChatGPT, Claude, Gemini, etc.)
+- That's it.
 
-## Install
+No Node.js. No installation. No downloads.
 
-### Option A: Automatic (Recommended)
+---
 
-Double-click **`install.bat`** in the VektrIDE folder. It will:
-1. Verify Node.js is installed
-2. Run `npm install` (pulls dependencies)
-3. Run `npm run build` (creates production bundle in `dist/`)
+## Getting Started
 
-### Option B: Manual
+### 1. Open Vektr Prism
+Visit **[vektrprism.site](https://vektrprism.site)** in Chrome or Edge.
 
-```powershell
-cd C:\VektrIDE
-npm install
-npm run build
+### 2. Complete Onboarding
+On first visit, the onboarding wizard will guide you through:
+- **Select your AI chatbots** — choose from ChatGPT, Claude, Gemini, Grok, DeepSeek, and more
+- **Sign in** — each selected chatbot opens in a popup window. Sign in, then close the popup. Vektr Prism detects it automatically.
+
+You only do this once. Your selections are remembered.
+
+### 3. Open Your Project
+Click **📂 Open Folder** in the Explorer panel. Chrome will show a native folder picker. Select your project folder and click **Allow** when asked for permission.
+
+Your folder loads immediately — files are read directly by your browser, nothing is uploaded anywhere.
+
+### 4. Start Coding
+- Pick any file in the Explorer
+- Ask AI in the Chat panel
+- Your prompt auto-copies to clipboard → paste in your AI tab → copy response → click **Paste Response**
+
+---
+
+## Folder Permission
+
+Chrome may occasionally ask you to re-confirm access to your folder (usually after restarting the browser). When this happens, click **Re-connect** in the Explorer panel — it takes one click to restore access.
+
+To make this less frequent, enable persistent storage in Chrome:
+```
+chrome://settings/content/protectedContent → Allow
 ```
 
-## Launch
+---
 
-### Production Mode (Persistent App)
+## Supported AI Providers (All Free Tier)
 
-Double-click **`launch.bat`** or run:
+| Provider | URL | Free Tier |
+|----------|-----|-----------|
+| ChatGPT | chatgpt.com | GPT-4o |
+| Claude | claude.ai | Claude 3.5 Sonnet |
+| Gemini | gemini.google.com | Gemini 1.5 Pro |
+| Grok | grok.com | Grok 2 |
+| Copilot | copilot.microsoft.com | GPT-4 |
+| DeepSeek | chat.deepseek.com | R1, V3 |
+| Meta AI | meta.ai | Llama 4 |
+| Perplexity | perplexity.ai | Search + AI |
+| NotebookLM | notebooklm.google.com | Codebase grounding |
+| AI Studio | aistudio.google.com | Gemini API |
 
-```powershell
-cd C:\VektrIDE
-npm start
-```
-
-This starts a single Node.js process on **port 3001** that serves both the API and the built frontend. Open `http://localhost:3001` in any browser.
-
-### Development Mode (Hot Reload)
-
-For active development with live-reload:
-
-```powershell
-# Terminal 1: Vite dev server (frontend)
-npm run dev
-
-# Terminal 2: Express API (backend)
-npm run server
-```
-
-Frontend at `:5173`, API at `:3001`. Vite proxies `/api/*` to Express automatically.
-
-## Connecting to AI Chatbots
-
-VektrIDE talks to AI chatbots through your running Chrome browser via Chrome DevTools Protocol (CDP).
-
-### Step 1: Launch Chrome with CDP
-
-```powershell
-chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug"
-```
-
-> **Note:** You need a separate `--user-data-dir` to avoid conflicts with your normal Chrome profile. You can use any path.
-
-### Step 2: Open an AI Chatbot
-
-In that Chrome window, navigate to any supported chatbot:
-- `https://gemini.google.com`
-- `https://chatgpt.com`
-- `https://claude.ai`
-- `https://chat.mistral.ai`
-- `https://perplexity.ai`
-- Or any other chat UI
-
-### Step 3: Use VektrIDE
-
-1. Open `http://localhost:3001` (or `:5173` in dev mode)
-2. Enter a project path in the sidebar (e.g. `C:\projects\my-app`)
-3. Click a file to open it in the editor
-4. Select the provider from the dropdown
-5. Type a prompt → click **Ask AI**
-6. Review the response → click **Confirm Change** to save
+---
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| `Playwright bridge not connected` | Chrome isn't running with `--remote-debugging-port=9222` |
-| `No open tab found for provider` | Open the chatbot's website in the CDP Chrome window |
-| `dist/ not found` | Run `npm run build` to create the production bundle |
-| Port 3001 in use | Set `PORT=3002 node server.js` or change in `.env` |
-| `node` not found | Install Node.js from https://nodejs.org |
+### "Open Folder doesn't work"
+- Make sure you're using Chrome or Edge 86+
+- Firefox and Safari do not support the File System Access API
 
-## Ports
+### "My folder disappeared after restart"
+- Click **Re-connect** in the Explorer panel
+- Chrome revokes folder access for security on browser restart
 
-| Port | Service |
-|------|---------|
-| 3001 | VektrIDE server (API + frontend) |
-| 5173 | Vite dev server (dev mode only) |
-| 9222 | Chrome CDP (must be launched by you) |
+### "Clipboard paste isn't working"
+- Make sure you've copied the AI's response before clicking "Paste Response"
+- Chrome requires the page to be focused — click anywhere on Vektr Prism first
+
+### "AI tab isn't opening"
+- Check that your browser allows popups from vektrprism.site
+- Chrome → Settings → Privacy → Site Settings → Pop-ups → Allow vektrprism.site
+
+### "Popup was blocked during onboarding"
+- Click the **Open ↗** button next to each provider to open it manually
+- Sign in, close the tab, then click "Continue" in the wizard
+
+---
+
+## Privacy
+
+- **Your code never leaves your machine.** Files are read/written by the browser directly.
+- **Your AI conversations stay in your own browser sessions.** We have no server receiving them.
+- **Vektr Prism has no backend.** It's a static website on Cloudflare's CDN.
+- We collect no telemetry, no analytics, no data.

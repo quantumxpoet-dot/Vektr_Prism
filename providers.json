@@ -1,64 +1,122 @@
 {
+    "_comment": "Vektr Prism Provider Config — used by the clipboard bridge and onboarding wizard. Add any AI chatbot with a free web interface by adding an entry here.",
     "providers": [
         {
-            "id": "gemini",
-            "name": "Google Gemini",
-            "urlPattern": "gemini.google.com",
-            "inputSelector": "[contenteditable='true'], [role='textbox'], .ql-editor, textarea",
-            "submitMethod": "enter",
-            "responseSelector": ".response-container model-response .markdown, .message-content, .model-response-text",
-            "waitMs": 5000,
-            "notes": "Works with gemini.google.com — uses contenteditable div"
+            "_section": "=== FREE TIER AI CHATBOTS ==="
         },
         {
             "id": "chatgpt",
             "name": "ChatGPT",
-            "urlPattern": "chatgpt.com",
-            "inputSelector": "#prompt-textarea, [contenteditable='true']",
-            "submitMethod": "enter",
-            "responseSelector": ".markdown.prose, [data-message-author-role='assistant'] .markdown",
-            "waitMs": 6000,
-            "notes": "Works with chatgpt.com"
+            "category": "chatbot",
+            "url": "https://chatgpt.com",
+            "freeTier": "GPT-4o, custom GPTs",
+            "icon": "🤖",
+            "color": "#10a37f"
         },
         {
             "id": "claude",
             "name": "Claude",
-            "urlPattern": "claude.ai",
-            "inputSelector": "[contenteditable='true'], .ProseMirror",
-            "submitMethod": "enter",
-            "responseSelector": ".font-claude-message .grid-cols-1 .markdown, [data-is-streaming] .markdown",
-            "waitMs": 6000,
-            "notes": "Works with claude.ai"
+            "category": "chatbot",
+            "url": "https://claude.ai",
+            "freeTier": "Claude 3.5 Sonnet, Projects",
+            "icon": "✦",
+            "color": "#d4a276"
         },
         {
-            "id": "mistral",
-            "name": "Mistral Le Chat",
-            "urlPattern": "chat.mistral.ai",
-            "inputSelector": "textarea, [contenteditable='true']",
-            "submitMethod": "enter",
-            "responseSelector": ".prose, .message-content",
-            "waitMs": 5000,
-            "notes": "Works with chat.mistral.ai"
+            "id": "gemini",
+            "name": "Gemini",
+            "category": "chatbot",
+            "url": "https://gemini.google.com",
+            "freeTier": "Gemini 1.5 Pro, Gems",
+            "icon": "✦",
+            "color": "#4285f4"
+        },
+        {
+            "id": "grok",
+            "name": "Grok",
+            "category": "chatbot",
+            "url": "https://grok.com",
+            "freeTier": "Grok 2, real-time web",
+            "icon": "𝕏",
+            "color": "#1a1a1a"
+        },
+        {
+            "id": "copilot",
+            "name": "Microsoft Copilot",
+            "category": "chatbot",
+            "url": "https://copilot.microsoft.com",
+            "freeTier": "GPT-4 via Microsoft",
+            "icon": "🪟",
+            "color": "#0078d4"
+        },
+        {
+            "id": "deepseek",
+            "name": "DeepSeek",
+            "category": "chatbot",
+            "url": "https://chat.deepseek.com",
+            "freeTier": "R1, V3 — fully free",
+            "icon": "🐳",
+            "color": "#4d6bfe"
+        },
+        {
+            "id": "meta-ai",
+            "name": "Meta AI",
+            "category": "chatbot",
+            "url": "https://meta.ai",
+            "freeTier": "Llama 4 — fully free",
+            "icon": "🔵",
+            "color": "#0866ff"
         },
         {
             "id": "perplexity",
             "name": "Perplexity",
-            "urlPattern": "perplexity.ai",
-            "inputSelector": "textarea, [contenteditable='true']",
-            "submitMethod": "enter",
-            "responseSelector": ".prose, .markdown-content",
-            "waitMs": 6000,
-            "notes": "Works with perplexity.ai"
+            "category": "chatbot",
+            "url": "https://perplexity.ai",
+            "freeTier": "AI search + reasoning",
+            "icon": "🔍",
+            "color": "#1fb8cd"
         },
         {
-            "id": "generic",
-            "name": "Generic (Auto-detect)",
-            "urlPattern": "",
-            "inputSelector": "textarea, [contenteditable='true'], [role='textbox'], input[type='text']",
-            "submitMethod": "enter",
-            "responseSelector": ".markdown, .prose, .message-content, .response, .answer",
-            "waitMs": 6000,
-            "notes": "Fallback — tries common selectors on any chat page"
+            "_section": "=== AGENTIC ==="
+        },
+        {
+            "id": "manus",
+            "name": "Manus",
+            "category": "agentic",
+            "url": "https://manus.im",
+            "freeTier": "Autonomous agentic AI",
+            "icon": "🤝",
+            "color": "#6c47ff"
+        },
+        {
+            "_section": "=== GOOGLE TOOLS ==="
+        },
+        {
+            "id": "notebooklm",
+            "name": "NotebookLM",
+            "category": "document",
+            "url": "https://notebooklm.google.com",
+            "freeTier": "Codebase-grounded AI — free",
+            "icon": "📓",
+            "color": "#34a853"
+        },
+        {
+            "id": "gemini-studio",
+            "name": "Google AI Studio",
+            "category": "enterprise",
+            "url": "https://aistudio.google.com",
+            "freeTier": "Gemini API playground — free tier",
+            "icon": "🧪",
+            "color": "#4285f4"
+        },
+        {
+            "id": "vertex",
+            "name": "Vertex AI",
+            "category": "enterprise",
+            "url": "https://console.cloud.google.com",
+            "freeTier": "Enterprise Gemini — GCloud account",
+            "icon": "☁️",
+            "color": "#fbbc04"
         }
     ]
 }

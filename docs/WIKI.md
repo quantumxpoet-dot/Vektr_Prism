@@ -1,140 +1,127 @@
-# VektrIDE — Architecture Wiki
+# Vektr Prism — Architecture Wiki
 
 ## Overview
 
-VektrIDE is a "State-Sync" IDE — the browser stays open with your AI session (history, custom instructions, etc.), and the IDE injects prompts and reads responses via DOM manipulation. No API keys needed.
-
-## Architecture Diagram
+Vektr Prism is a **browser-native agentic IDE** hosted at `vektrprism.site`. It is a pure static web application — no server, no backend, no installation required.
 
 ```
-┌─────────────────────────────────────────────────┐
-│  React Frontend (localhost:3001 or :5173)        │
-│  ┌─────────┐ ┌──────────────┐ ┌───────────────┐ │
-│  │ Sidebar  │ │ Monaco Editor│ │ Terminal Panel│ │
-│  │ (files)  │ │              │ │ (AI response) │ │
-│  └─────────┘ └──────────────┘ └───────────────┘ │
-│         [Provider ▾]   [Ask AI]                  │
-└───────────────────┬─────────────────────────────┘
-                    │ fetch('/api/...')
-┌───────────────────▼─────────────────────────────┐
-│  Express Server (server.js, port 3001)           │
-│  • Static file serving (dist/)                   │
-│  • File system API (read, write, list)           │
-│  • AI bridge relay                               │
-└───────────────────┬─────────────────────────────┘
-                    │
-┌───────────────────▼─────────────────────────────┐
-│  IDEBridge (ide-backend.js)                      │
-│  • Connects via CDP to Chrome on port 9222       │
-│  • Loads providers.json for DOM selectors         │
-│  • Finds matching tab by URL pattern              │
-│  • Injects prompt → waits for stable response     │
-└───────────────────┬─────────────────────────────┘
-                    │ Chrome DevTools Protocol
-┌───────────────────▼─────────────────────────────┐
-│  Chrome Browser                                  │
-│  Tab: ChatGPT / Claude / Gemini / Any chatbot    │
-└─────────────────────────────────────────────────┘
+vektrprism.site (Cloudflare Pages CDN)
+        │
+   User's Browser
+        ├── File System Access API  → reads/writes local files
+        ├── Clipboard API           → sends prompts to AI, receives responses
+        ├── window.open()           → opens AI chat tabs
+        └── IndexedDB / localStorage → persists state
 ```
 
-## Key Design Decisions
+---
 
-### Why Playwright + CDP instead of APIs?
+## Tech Stack
 
-| Factor | API Approach | CDP / Playwright |
-|--------|-------------|-----------------|
-| Auth | Need API keys per provider | Uses your logged-in browser session |
-| Cost | Pay per token | Free (uses your existing subscription) |
-| Compatibility | Different SDK per provider | One bridge, any website |
-| Context | Starts fresh each call | Keeps conversation history |
-| Features | Limited to API capabilities | Access to Gems, custom GPTs, artifacts |
+| Layer | Technology |
+|-------|-----------|
+| UI Framework | React 19 |
+| Code Editor | Monaco Editor |
+| Styling | Vanilla CSS (design tokens, glassmorphism) |
+| File I/O | File System Access API (Chrome 86+) |
+| AI Bridge | Clipboard API + `window.open()` |
+| Persistence | IndexedDB + localStorage |
+| Hosting | Cloudflare Pages (static) |
+| Build | Vite |
+| Dependencies | React, Monaco only — zero server deps |
 
-### Why Provider-Agnostic?
+---
 
-`providers.json` is a config file, not code. Each provider is defined by:
+## Core Modules
 
-```json
-{
-  "id": "chatgpt",
-  "urlPattern": "chatgpt.com",       // How to find the tab
-  "inputSelector": "#prompt-textarea", // Where to type
-  "submitMethod": "enter",            // How to submit
-  "responseSelector": ".markdown",    // Where to read the response
-  "waitMs": 6000                      // Initial wait before polling
-}
+### `src/lib/fileSystem.js`
+Wrapper around the browser's File System Access API.
+
+- `openFolder()` — `showDirectoryPicker()`, persists handle to IndexedDB
+- `restoreFolder()` — restores handle from IndexedDB on page load, re-requests permission
+- `listDir(handle, path)` — recursive directory tree (skips `node_modules`, `.git`, `dist`)
+- `readFile(handle)` — returns `{ content, name, extension, size, lastModified }`
+- `writeFile(handle, content)` — saves edits directly to disk, no server
+
+### `src/lib/aiBridge.js`
+The clipboard-based AI communication layer.
+
+- `clipboardAsk(prompt, providerId)` — copies prompt to clipboard, opens AI tab via `window.open()`
+- `readClipboardResponse()` — reads clipboard text (user's copied AI response)
+- `askAI(prompt, providerId)` — routes to clipboard or API key mode
+- `saveProvider(config)` — IndexedDB storage for provider configuration
+- Provider URLs defined as a static map — no network call needed
+
+---
+
+## Component Architecture
+
+```
+App.jsx
+├── OnboardingWizard.jsx   First-run: multi-select providers, popup auth
+├── TopNav.jsx             Branding, mode toggle (Manual/Agent)
+├── Sidebar.jsx            File explorer using fileSystem.js
+├── Editor.jsx             Monaco (desktop) / textarea (mobile)
+├── ChatPanel.jsx          Chat interface, clipboard bridge, Paste Response
+└── AgentPanel.jsx         Multi-step clipboard agent (Plan → Execute)
 ```
 
-Adding a new chatbot = adding one JSON object. No rebuild needed.
+---
 
-### Why Express instead of the existing Oracle server?
+## AI Bridge — How It Works
 
-Oracle's `dashboard_server.py` is a Python security control plane (process management, hosts freezing, ACL locking). VektrIDE needs a Node.js server because the Playwright bridge is JavaScript. Mixing them would mean:
-- Two languages bridged by IPC
-- Coupled lifecycle (IDE breaks when security tools restart)
-- No benefit — zero shared functionality
+**No API keys. No server. Your browser sessions = your credentials.**
 
-## Data Flow: Ask AI
+### Clipboard Bridge (default)
+1. User types prompt → clicks "Ask AI"
+2. Prompt is auto-copied to clipboard (`navigator.clipboard.writeText`)
+3. AI tab opens/focuses (`window.open(url, 'vektr_chatgpt', ...)`)
+4. User pastes into AI, gets response, copies response
+5. User clicks **"Paste Response"** → clipboard is read → response appears in IDE
 
-```
-1. User types prompt in AskAIBar
-   └─→ App.askAI()
-       └─→ fetch POST /api/ask-ai { prompt, code, provider }
+### Agent Mode (multi-step)
+1. User describes goal → "Start Agent"
+2. Agent builds planning prompt → copies to clipboard → opens AI tab
+3. User pastes → AI returns JSON step plan → user copies → clicks "Paste Plan"
+4. Agent walks through each step with a targeted code prompt per file
+5. User pastes code per step → applies to their files
 
-2. Express receives request
-   └─→ getBridge() — lazy-connects to Chrome via CDP
-   └─→ bridge.askAI(providerId, prompt, code)
+---
 
-3. IDEBridge
-   └─→ Finds tab matching provider.urlPattern
-   └─→ Clicks input (provider.inputSelector)
-   └─→ Types the full prompt
-   └─→ Presses Enter (or clicks submit button)
-   └─→ Polls response element until text stabilizes (2s stable = done)
-   └─→ Returns response text
+## File Persistence
 
-4. Express returns { ok, provider, response }
-   └─→ React sets aiResponse state
-   └─→ TerminalPanel renders response
+Folder handles are stored in `IndexedDB` (key: `lastFolder`). On page load, `restoreFolder()` calls `handle.requestPermission()` — Chrome prompts the user with a small permission dialog (one click). After that, the folder is accessible again without re-picking.
 
-5. User clicks "Confirm Change"
-   └─→ fetch POST /api/save-file { path, content: aiResponse }
-   └─→ Express writes to disk
-   └─→ Editor updates with new content
-```
+---
 
-## File System Security
+## Onboarding Flow
 
-The file API has no authentication — it's a local-only tool. The server binds to `localhost` by default. Key points:
+1. Welcome screen
+2. Multi-select provider cards (ChatGPT, Claude, Gemini, Grok, DeepSeek, etc.)
+3. For each selected provider: `window.open(url, ...)` popup — user signs in
+4. Popup close detected via `setInterval(popup.closed)` → marks as connected
+5. Completion screen → localStorage flag set → wizard never shows again
 
-- `GET /api/files` — read-only directory listing
-- `GET /api/file` — read-only file content
-- `POST /api/save-file` — writes to disk (the only destructive operation)
-- Hidden files (`.` prefix) and `node_modules` are filtered from listings
+---
 
-## Component Map
+## Deployment
 
-| Component | File | Responsibility |
-|-----------|------|---------------|
-| `Sidebar` | `src/components/Sidebar.jsx` | File tree, path input, folder expand/collapse |
-| `Editor` | `src/components/Editor.jsx` | Monaco Editor wrapper, language detection |
-| `AskAIBar` | `src/components/AskAIBar.jsx` | Provider picker, prompt input, submit |
-| `TerminalPanel` | `src/components/TerminalPanel.jsx` | Response display, Confirm Change, Clear |
-| `App` | `src/App.jsx` | State management, API calls, layout |
+- **Host**: Cloudflare Pages (`vektrprism.site`)
+- **Build**: `npm run build` → outputs `dist/`
+- **Config**: `wrangler.toml` — build command + Node 22
+- **No server**: Cloudflare serves pure static files from CDN
+- **Zero backend costs**: Cloudflare Pages free tier is sufficient
 
-## Extending VektrIDE
+---
 
-### Add a Provider
-Edit `providers.json`. Inspect the chatbot's DOM to find:
-- The text input (look for `textarea`, `[contenteditable]`, or `[role="textbox"]`)
-- The response container (look for `.markdown`, `.prose`, or similar)
+## Browser Support
 
-### Change the Port
-```powershell
-set PORT=8080 && node server.js
-```
+| Browser | Support |
+|---------|---------|
+| Chrome 86+ | ✅ Full |
+| Edge 86+ | ✅ Full |
+| Firefox | ⚠️ File System Access API not supported |
+| Safari | ⚠️ Partial |
+| Mobile Chrome | ⚠️ Works, not optimized |
 
-### Add New API Endpoints
-Add routes to `server.js` between the existing endpoint sections.
-
-### Modify the UI Theme
-All design tokens are CSS custom properties in `src/index.css` under `:root`.
+> Chrome is required for the File System Access API and reliable clipboard access.
