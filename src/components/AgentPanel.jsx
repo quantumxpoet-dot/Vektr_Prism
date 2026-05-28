@@ -46,7 +46,7 @@ export default function AgentPanel({ currentDir }) {
 
     // Session memory — restore last goal and mode
     useEffect(() => {
-        const saved = localStorage.getItem('vektride_session');
+        const saved = localStorage.getItem('vektrprism_session');
         if (saved) {
             try {
                 const s = JSON.parse(saved);
@@ -58,7 +58,7 @@ export default function AgentPanel({ currentDir }) {
 
     // Save session on changes
     useEffect(() => {
-        localStorage.setItem('vektride_session', JSON.stringify({ goal, mode, dir: currentDir }));
+        localStorage.setItem('vektrprism_session', JSON.stringify({ goal, mode, dir: currentDir }));
     }, [goal, mode, currentDir]);
 
     const logEndRef = useRef(null);

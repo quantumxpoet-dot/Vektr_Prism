@@ -1,4 +1,4 @@
-# VektrIDE — Frequently Asked Questions
+# Vektr Prism — Frequently Asked Questions
 
 ---
 
@@ -8,13 +8,13 @@
 **Yes** if you run from source — you need Node.js and Chrome.
 
 ### Do I need an API key?
-**No.** VektrIDE uses your existing browser sessions. If you're logged into ChatGPT, Claude, or Gemini in Chrome, that's all you need. No keys, no tokens, no billing.
+**No.** Vektr Prism uses your existing browser sessions. If you're logged into ChatGPT, Claude, or Gemini in Chrome, that's all you need. No keys, no tokens, no billing.
 
 ### Does it work with [insert AI chatbot]?
 If it has a text input and a response area in a browser, **yes**. Edit `providers.json` to add the CSS selectors. No code changes, no restart.
 
 ### Is my code sent to the internet?
-Only to the AI chatbot you choose, through your own browser tab. VektrIDE itself runs 100% locally — no telemetry, no cloud, no external servers.
+Only to the AI chatbot you choose, through your own browser tab. Vektr Prism itself runs 100% locally — no telemetry, no cloud, no external servers.
 
 ### Can I use my normal Chrome profile?
 The `--user-data-dir` flag creates a separate profile to avoid conflicts. You *can* use your main profile, but if Chrome is already open, the debug port may conflict. Safest to use a separate profile.
@@ -22,7 +22,7 @@ The `--user-data-dir` flag creates a separate profile to avoid conflicts. You *c
 ### Why does it need Playwright? That's 50MB.
 Playwright is the library that lets Node.js control Chrome tabs. It's the engine behind the entire AI bridge. Without it, there's no way to type into ChatGPT or read Claude's responses programmatically. It's the one dependency that can't be removed.
 
-### Can I run VektrIDE and my normal Chrome at the same time?
+### Can I run Vektr Prism and my normal Chrome at the same time?
 **Yes**, as long as your normal Chrome wasn't launched with `--remote-debugging-port`. The debug Chrome is a separate instance with its own profile.
 
 ### What happens if the AI chatbot changes its website layout?
@@ -44,21 +44,21 @@ The selectors in `providers.json` may break. When that happens:
 In **Supervised mode** (the default), the agent pauses after every step and waits for your approval. Nothing is written to disk until you click Approve. In **Autonomous mode**, it runs freely — use with caution, or on a Git branch.
 
 ### Can I undo changes the agent made?
-VektrIDE doesn't have built-in undo. Use Git:
+Vektr Prism doesn't have built-in undo. Use Git:
 ```powershell
 cd C:\your\project
 git diff          # see what changed
 git checkout .    # undo everything
 ```
 
-### Does VektrIDE run in the background?
+### Does Vektr Prism run in the background?
 - **Desktop app**: Yes, it's a normal application. Close the window = app quits.
-- **From source**: No. It runs as long as the terminal window is open. Close the window = VektrIDE stops.
+- **From source**: No. It runs as long as the terminal window is open. Close the window = Vektr Prism stops.
 
-### Can I use VektrIDE on Mac or Linux?
+### Can I use Vektr Prism on Mac or Linux?
 **Yes.** The desktop app builds for Windows, macOS, and Linux. The source code is cross-platform Node.js, but the batch files (`.bat`) are Windows-only. On Mac/Linux from source, replace `launch.bat` with `node server.js` and adjust the Chrome command for your OS.
 
-### How do I update VektrIDE?
+### How do I update Vektr Prism?
 - **Desktop app**: The auto-updater will notify you when updates are available. Click to update.
 - **From source**: Pull the latest code (if using Git), then:
 ```powershell
@@ -67,14 +67,14 @@ npm run build
 ```
 Or just double-click `install.bat` again.
 
-### Can multiple people use VektrIDE at the same time?
+### Can multiple people use Vektr Prism at the same time?
 Not by design. It binds to `localhost` and controls one Chrome instance. It's a single-user local tool.
 
 ### What's the mobile companion?
-A PWA/mobile app that connects to your desktop VektrIDE via local WiFi. Your phone becomes a remote control — you can start agents, approve steps, and see results from anywhere on your home network. The desktop does the heavy lifting (Playwright, shell commands), your phone is just the UI.
+A PWA/mobile app that connects to your desktop Vektr Prism via local WiFi. Your phone becomes a remote control — you can start agents, approve steps, and see results from anywhere on your home network. The desktop does the heavy lifting (Playwright, shell commands), your phone is just the UI.
 
 ### How does the mobile companion work?
-1. Open VektrIDE desktop
+1. Open Vektr Prism desktop
 2. Click the mobile icon
 3. Scan QR code with your phone
 4. Phone connects via WebSocket over local WiFi

@@ -10,7 +10,7 @@
             "submitMethod": "enter",
             "responseSelector": ".markdown, .prose, .message-content, .response, .answer, [class*='message'], [class*='response'], [class*='assistant'], [class*='bot'], article, [class*='output'], [class*='result']",
             "waitMs": 8000,
-            "notes": "Works with ANY chat interface. VektrIDE finds the open tab, types your prompt, waits for a response. This is the default — you don't need named providers."
+            "notes": "Works with ANY chat interface. Vektr Prism finds the open tab, types your prompt, waits for a response. This is the default — you don't need named providers."
         },
         {
             "_section": "=== MAJOR AI CHATBOTS ==="

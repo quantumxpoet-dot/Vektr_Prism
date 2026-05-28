@@ -1,5 +1,5 @@
 /**
- * VektrIDE — Agent Controller
+ * Vektr Prism — Agent Controller
  * 
  * Orchestrates the agentic loop: PLAN → EXECUTE → VERIFY → ITERATE
  */

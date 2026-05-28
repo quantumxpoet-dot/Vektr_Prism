@@ -1,5 +1,5 @@
 /**
- * VektrIDE — Agent Prompt Templates
+ * Vektr Prism — Agent Prompt Templates
  * 
  * Structured prompts for the agentic loop
  */

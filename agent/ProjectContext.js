@@ -1,5 +1,5 @@
 /**
- * VektrIDE — Project Context Builder
+ * Vektr Prism — Project Context Builder
  * 
  * Scans project directory, builds context for AI understanding
  */

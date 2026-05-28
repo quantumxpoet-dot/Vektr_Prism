@@ -2,7 +2,7 @@
 
 ## Overview
 
-VektrIDE is a browser-native agentic IDE that connects to AI chatbots via Chrome DevTools Protocol (CDP). The browser stays open with your AI session (history, custom instructions, paid features), and the IDE injects prompts and reads responses via Playwright automation. No API keys. No subscriptions. Just your existing browser sessions.
+Vektr Prism is a browser-native agentic IDE that connects to AI chatbots via Chrome DevTools Protocol (CDP). The browser stays open with your AI session (history, custom instructions, paid features), and the IDE injects prompts and reads responses via Playwright automation. No API keys. No subscriptions. Just your existing browser sessions.
 
 **Distribution:** Available as a desktop app (Electron) or can be run from source. The desktop app bundles everything — Node.js, server, frontend, Playwright — into a single installer.
 
@@ -279,13 +279,13 @@ install-context-menu.bat /remove  # Uninstall
 **localStorage** persists across sessions:
 - `vektr_system_prompt` — project context / system prompt
 - `vektr_recent_folders` — last 6 opened project paths
-- `vektride_session` — last goal + mode from Agent panel
+- `vektrprism_session` — last goal + mode from Agent panel
 
 ---
 
 ## Mobile Companion
 
-VektrIDE includes a PWA/mobile companion that connects to the desktop via WebSocket:
+Vektr Prism includes a PWA/mobile companion that connects to the desktop via WebSocket:
 
 - Desktop runs the full agent (Playwright, shell commands)
 - Mobile app connects via local WiFi

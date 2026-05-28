@@ -1,5 +1,5 @@
 /**
- * VektrIDE — API Server
+ * Vektr Prism — API Server
  * 
  * Express server on port 3001. Provides endpoints for:
  *  - File browsing (Windows paths)
@@ -708,7 +708,7 @@ app.post('/api/git/snapshot', (req, res) => {
     try {
         execSync('git add -A', { cwd: projectDir });
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
-        execSync(`git commit -m "vektride: pre-agent snapshot ${timestamp}" --allow-empty`, { cwd: projectDir });
+        execSync(`git commit -m "vektrprism: pre-agent snapshot ${timestamp}" --allow-empty`, { cwd: projectDir });
         const hash = execSync('git rev-parse --short HEAD', { cwd: projectDir }).toString().trim();
         res.json({ ok: true, message: `Snapshot committed: ${hash}`, hash });
     } catch (e) {
@@ -751,7 +751,7 @@ if (fs.existsSync(distPath)) {
 // =============================================
 httpServer.listen(PORT, () => {
     const mode = fs.existsSync(distPath) ? 'PRODUCTION' : 'DEV (use Vite on :5173)';
-    console.log(`\n  ⚡ VektrIDE — http://localhost:${PORT}  [${mode}]\n`);
+    console.log(`\n  ⚡ Vektr Prism — http://localhost:${PORT}  [${mode}]\n`);
     console.log('  Core:');
     console.log('    GET  /api/files              — list directory');
     console.log('    GET  /api/file               — read file');

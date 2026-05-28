@@ -1,5 +1,5 @@
 /**
- * VektrIDE — Code Extractor
+ * Vektr Prism — Code Extractor
  * 
  * Parses AI responses, extracts code blocks with file paths
  */

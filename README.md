@@ -1,4 +1,4 @@
-# VektrIDE
+# Vektr Prism
 
 > **The AI IDE that works with the AI you already pay for.**  
 > No API keys. No switching tools. No per-token billing.
@@ -22,18 +22,18 @@ That assumption has consequences:
 | Fresh context per call | No conversation history, no system prompts |
 | Closed model list | New model ships? Wait for SDK update. |
 
-**VektrIDE flips the assumption.**
+**Vektr Prism flips the assumption.**
 
 ---
 
-## The VektrIDE Approach: Browser-Native AI
+## The Vektr Prism Approach: Browser-Native AI
 
-VektrIDE connects to any AI chatbot running in your browser using Chrome DevTools Protocol. No API. No key. No billing.
+Vektr Prism connects to any AI chatbot running in your browser using Chrome DevTools Protocol. No API. No key. No billing.
 
 ```
 Your Browser Tab (ChatGPT / Claude / Gemini / NotebookLM / Grok / anything)
         ↕  Chrome DevTools Protocol (local, zero latency)
-   VektrIDE Agent (plans, executes, verifies, iterates)
+   Vektr Prism Agent (plans, executes, verifies, iterates)
         ↕  File System API (read/write any local file)
    Your Codebase
 ```
@@ -70,7 +70,7 @@ When tests fail, the agent doesn't just retry the same prompt. It diffs the exac
 
 ## Feature Comparison
 
-| Feature | Cursor / Copilot / Cline | VektrIDE |
+| Feature | Cursor / Copilot / Cline | Vektr Prism |
 |---------|--------------------------|---------|
 | AI models | Locked to their list | **Any chat UI, any model** |
 | Cost | Per-token API billing | **Your existing subscription** |
@@ -99,7 +99,7 @@ For AI features, open Chrome in debug mode:
 ```powershell
 chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug"
 ```
-Navigate to any AI chatbot. VektrIDE finds it automatically.
+Navigate to any AI chatbot. Vektr Prism finds it automatically.
 
 ---
 
@@ -114,7 +114,7 @@ Navigate to any AI chatbot. VektrIDE finds it automatically.
 ## Docs
 
 - 📖 [Setup Guide](docs/SETUP.md) — Step-by-step install + troubleshooting
-- 🔄 [Workflow Guide](docs/WORKFLOW.md) — What to expect when using VektrIDE
+- 🔄 [Workflow Guide](docs/WORKFLOW.md) — What to expect when using Vektr Prism
 - 🏗️ [Architecture Wiki](docs/WIKI.md) — How it works under the hood
 - ❓ [FAQ](docs/FAQ.md) — Common questions answered
 - 💡 [Innovation Assessment](docs/INNOVATION.md) — Why this is a genuine paradigm shift (9/10)
@@ -124,7 +124,7 @@ Navigate to any AI chatbot. VektrIDE finds it automatically.
 ## Project Structure
 
 ```
-VektrIDE/
+Vektr Prism/
 ├── launch.bat / install.bat     # Launch (opens browser automatically)
 ├── server.js                    # Express API + static server
 ├── ide-backend.js               # Universal Playwright bridge
@@ -138,6 +138,9 @@ VektrIDE/
 │   ├── CodeExtractor.js         # AI response parser
 │   ├── TaskRunner.js            # Shell command executor
 │   └── prompts.js               # Structured prompt templates
+├── electron/                    # Desktop app wrapper
+│   ├── main.cjs                 # Electron main process
+│   └── preload.cjs              # IPC bridge
 ├── src/                         # React frontend (Monaco Editor)
 └── dist/                        # Production build
 ```

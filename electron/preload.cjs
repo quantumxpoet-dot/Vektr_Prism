@@ -1,5 +1,5 @@
 /**
- * VektrIDE — Electron Preload Script
+ * Vektr Prism — Electron Preload Script
  * 
  * Secure bridge between renderer and main process
  */

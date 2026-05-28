@@ -1,4 +1,4 @@
-# VektrIDE — Setup Guide
+# Vektr Prism — Setup Guide
 
 > **No coding experience needed to follow this guide.** Every step is explained.
 
@@ -22,7 +22,7 @@ Before we start, you need **two things** installed on your Windows PC:
 
 #### 1. Node.js (Required)
 
-Node.js is the engine that runs VektrIDE's server.
+Node.js is the engine that runs Vektr Prism's server.
 
 **How to check if you already have it:**
 1. Press `Win + R`, type `cmd`, press Enter
@@ -40,7 +40,7 @@ Node.js is the engine that runs VektrIDE's server.
 
 ### 2. Google Chrome or Microsoft Edge (Required)
 
-You probably already have one of these. VektrIDE uses Chrome's developer mode to talk to AI chatbots.
+You probably already have one of these. Vektr Prism uses Chrome's developer mode to talk to AI chatbots.
 
 ---
 
@@ -58,7 +58,7 @@ Download the installer for your OS from the releases page.
 
 ### Step 3: Launch
 
-Double-click the VektrIDE icon. The app opens with the full IDE interface.
+Double-click the Vektr Prism icon. The app opens with the full IDE interface.
 
 ---
 
@@ -85,23 +85,23 @@ npm run build
 3. Wait for each to finish before typing the next one
 
 ### What just happened?
-- `npm install` downloaded the libraries VektrIDE needs
+- `npm install` downloaded the libraries Vektr Prism needs
 - `npm run build` compiled the web interface into a fast, optimized bundle
 
 ---
 
-## Starting VektrIDE (From Source)
+## Starting Vektr Prism (From Source)
 
-### Step 1: Launch VektrIDE
+### Step 1: Launch Vektr Prism
 
-Double-click **`launch.bat`** in the VektrIDE folder.
+Double-click **`launch.bat`** in the Vektr Prism folder.
 
 You'll see something like:
 ```
-  ⚡ VektrIDE — http://localhost:3001  [PRODUCTION]
+  ⚡ Vektr Prism — http://localhost:3001  [PRODUCTION]
 ```
 
-**Don't close this window!** VektrIDE runs as long as this window is open.
+**Don't close this window!** Vektr Prism runs as long as this window is open.
 
 ### Step 2: Open the Interface
 
@@ -110,7 +110,7 @@ Open your web browser (any browser works) and go to:
 http://localhost:3001
 ```
 
-You should see the VektrIDE dashboard with a dark theme, a sidebar on the left, and a code editor in the middle.
+You should see the Vektr Prism dashboard with a dark theme, a sidebar on the left, and a code editor in the middle.
 
 ### Step 3: Connect to an AI Chatbot (Optional — for AI features)
 
@@ -123,7 +123,7 @@ This step is only needed if you want to use the "Ask AI" or "Agent Mode" feature
    chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug"
    ```
 
-   > **What does this do?** It opens Chrome in a special "debug mode" that lets VektrIDE read and type into web pages. Your normal Chrome profile is NOT affected.
+   > **What does this do?** It opens Chrome in a special "debug mode" that lets Vektr Prism read and type into web pages. Your normal Chrome profile is NOT affected.
 
 2. **Navigate to any AI chatbot** in that Chrome window:
    - `https://chatgpt.com`
@@ -134,11 +134,11 @@ This step is only needed if you want to use the "Ask AI" or "Agent Mode" feature
 
 3. **Log in** to the chatbot as you normally would
 
-4. **Leave that Chrome window open** — VektrIDE talks to it in the background
+4. **Leave that Chrome window open** — Vektr Prism talks to it in the background
 
 ---
 
-## Using VektrIDE
+## Using Vektr Prism
 
 ### Desktop App vs Browser
 
@@ -223,10 +223,10 @@ Both have the same features. The desktop app is more convenient.
 
 #### `Error: Cannot find module` when starting the server
 **Cause:** Dependencies weren't installed.
-**Fix:** Run `npm install` in the VektrIDE folder.
+**Fix:** Run `npm install` in the Vektr Prism folder.
 
 #### Port 3001 is already in use
-**Cause:** Another app or a previous VektrIDE instance is using port 3001.
+**Cause:** Another app or a previous Vektr Prism instance is using port 3001.
 **Fix:**
 - Option 1: Close the other instance (check your taskbar/system tray)
 - Option 2: Use a different port: `set PORT=3002 && node server.js`
@@ -243,14 +243,14 @@ Both have the same features. The desktop app is more convenient.
    chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug"
    ```
 2. Make sure that Chrome window is still open
-3. Click the "Reconnect" option or restart VektrIDE
+3. Click the "Reconnect" option or restart Vektr Prism
 
 #### "No open tab found for provider"
 **Cause:** The AI chatbot website isn't open in the special Chrome window.
 **Fix:**
 1. In the **Chrome window you opened with the special command**, navigate to the chatbot
 2. Make sure you're logged in
-3. Make sure you selected the correct provider in VektrIDE's dropdown
+3. Make sure you selected the correct provider in Vektr Prism's dropdown
 
 #### Chrome says "port 9222 is already in use"
 **Cause:** A previous debug Chrome session is still running.
@@ -299,7 +299,7 @@ Both have the same features. The desktop app is more convenient.
 
 | Port | What | When |
 |------|------|------|
-| **3001** | VektrIDE (your IDE) | Always (when VektrIDE is running) |
+| **3001** | Vektr Prism (your IDE) | Always (when Vektr Prism is running) |
 | **5173** | Vite dev server | Only during development (`npm run dev`) |
 | **9222** | Chrome debug port | Only when using AI features |
 
@@ -315,9 +315,9 @@ Both have the same features. The desktop app is more convenient.
 
 ## Mobile Companion
 
-VektrIDE includes a mobile companion that connects to your desktop app via local WiFi:
+Vektr Prism includes a mobile companion that connects to your desktop app via local WiFi:
 
-1. Open VektrIDE on your desktop
+1. Open Vektr Prism on your desktop
 2. Click the mobile icon in the top-right
 3. Scan the QR code with your phone
 4. Your phone becomes a remote control for the desktop agent

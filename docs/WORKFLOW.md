@@ -1,10 +1,10 @@
-# VektrIDE — Workflow Guide
+# Vektr Prism — Workflow Guide
 
 ## Quick Start
 
 ### Desktop App (Recommended)
 ```
-1. Download and install VektrIDE
+1. Download and install Vektr Prism
 2. Double-click to launch
 3. Open Chrome with CDP (app prompts you)
 4. Open any AI chatbot in Chrome
@@ -127,7 +127,7 @@ Click **✅ Approve** to continue, **⏭ Skip** to skip a step, or **🛑 Abort*
 Vektr_IDE supports **25+ providers** via `providers.json`. No code change needed to add a new one.
 
 ### How Auto-Detect Works
-1. VektrIDE reads all open Chrome tabs via CDP
+1. Vektr Prism reads all open Chrome tabs via CDP
 2. Matches each tab's URL against `urlPattern` in `providers.json`
 3. First match wins — that tab receives the prompt
 4. Falls back to generic CSS selectors if nothing matches
@@ -204,7 +204,7 @@ Use NotebookLM as a deep-understanding backend for your codebase:
 ## Project Structure
 
 ```
-VektrIDE/
+Vektr Prism/
 ├── src/                    # React frontend
 │   ├── App.jsx             # Root: layout, drag-resize, file watcher
 │   ├── index.css           # Full design system (CSS vars, components)

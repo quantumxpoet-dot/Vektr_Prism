@@ -1,5 +1,5 @@
 /**
- * VektrIDE — Playwright Bridge (CDP)
+ * Vektr Prism — Playwright Bridge (CDP)
  * 
  * Connects to Chrome via Chrome DevTools Protocol to automate AI chatbots.
  * No API keys — uses your existing browser session.

@@ -1,5 +1,5 @@
 /**
- * VektrIDE — NotebookLM Exporter
+ * Vektr Prism — NotebookLM Exporter
  * 
  * Exports project files as .txt for NotebookLM upload
  */

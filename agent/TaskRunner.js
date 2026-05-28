@@ -1,5 +1,5 @@
 /**
- * VektrIDE — Task Runner
+ * Vektr Prism — Task Runner
  * 
  * Executes shell commands (tests, lint, build)
  */

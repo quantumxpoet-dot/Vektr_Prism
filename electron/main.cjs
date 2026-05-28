@@ -1,5 +1,5 @@
 /**
- * VektrIDE — Electron Main Process
+ * Vektr Prism — Electron Main Process
  * 
  * Wraps the Express server + React frontend as a desktop app
  */
@@ -90,7 +90,7 @@ function startServer() {
         console.log('[Server]', output);
         
         // Detect when server is ready
-        if (output.includes('VektrIDE') && output.includes('localhost:3001')) {
+        if (output.includes('Vektr Prism') && output.includes('localhost:3001')) {
             serverReady = true;
         }
     });
