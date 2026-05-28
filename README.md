@@ -95,6 +95,8 @@ install.bat
 launch.bat
 ```
 
+**Production:** https://vektrprism.site (Cloudflare)
+
 For AI features, open Chrome in debug mode:
 ```powershell
 chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug"
