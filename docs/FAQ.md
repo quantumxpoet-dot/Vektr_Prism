@@ -2,6 +2,11 @@
 
 ---
 
+### Do I need to install anything?
+**No** if you download the desktop app. It includes everything — Node.js, the server, the frontend, Playwright. Just download, install, and run.
+
+**Yes** if you run from source — you need Node.js and Chrome.
+
 ### Do I need an API key?
 **No.** VektrIDE uses your existing browser sessions. If you're logged into ChatGPT, Claude, or Gemini in Chrome, that's all you need. No keys, no tokens, no billing.
 
@@ -47,13 +52,15 @@ git checkout .    # undo everything
 ```
 
 ### Does VektrIDE run in the background?
-No. It runs as long as the terminal window is open. Close the window = VektrIDE stops. There's no system tray icon or background service.
+- **Desktop app**: Yes, it's a normal application. Close the window = app quits.
+- **From source**: No. It runs as long as the terminal window is open. Close the window = VektrIDE stops.
 
 ### Can I use VektrIDE on Mac or Linux?
-The code is cross-platform Node.js, but the batch files (`.bat`) are Windows-only. On Mac/Linux, replace `launch.bat` with `node server.js` and adjust the Chrome command for your OS.
+**Yes.** The desktop app builds for Windows, macOS, and Linux. The source code is cross-platform Node.js, but the batch files (`.bat`) are Windows-only. On Mac/Linux from source, replace `launch.bat` with `node server.js` and adjust the Chrome command for your OS.
 
 ### How do I update VektrIDE?
-Pull the latest code (if using Git), then:
+- **Desktop app**: The auto-updater will notify you when updates are available. Click to update.
+- **From source**: Pull the latest code (if using Git), then:
 ```powershell
 npm install
 npm run build
@@ -63,5 +70,14 @@ Or just double-click `install.bat` again.
 ### Can multiple people use VektrIDE at the same time?
 Not by design. It binds to `localhost` and controls one Chrome instance. It's a single-user local tool.
 
-### Where are the logs?
-The agent logs appear live in the Agent Panel UI. Server logs print to the terminal window running `node server.js`. There are no log files written to disk.
+### What's the mobile companion?
+A PWA/mobile app that connects to your desktop VektrIDE via local WiFi. Your phone becomes a remote control — you can start agents, approve steps, and see results from anywhere on your home network. The desktop does the heavy lifting (Playwright, shell commands), your phone is just the UI.
+
+### How does the mobile companion work?
+1. Open VektrIDE desktop
+2. Click the mobile icon
+3. Scan QR code with your phone
+4. Phone connects via WebSocket over local WiFi
+5. Send commands from phone, desktop executes, results stream back
+
+No internet required — it's all local network.

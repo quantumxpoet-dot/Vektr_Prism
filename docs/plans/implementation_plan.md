@@ -1,6 +1,19 @@
 # Vektr Prism — Web-Only Refactor Plan
 
-## Goal
+> **⚠️ DEPRECATED** — This plan is no longer being pursued.
+>
+> We decided to go with an **Electron desktop app** instead of a web-only approach. The desktop app preserves full agentic capabilities (Playwright, shell commands, no copy-paste) while providing a better user experience with a single download installer.
+>
+> See the updated documentation:
+> - [SETUP.md](../SETUP.md) — Desktop app installation
+> - [WIKI.md](../WIKI.md) — Current architecture
+> - [WORKFLOW.md](../WORKFLOW.md) — Current workflow
+>
+> The web-only approach would have required copy-paste for AI interactions, which defeats the purpose of an agentic IDE.
+
+---
+
+## Goal (Original - Deprecated)
 Refactor Vektr Prism from a local Node.js app into a **pure static web app** hosted at `vektrprism.site` on Cloudflare Pages. Zero downloads, zero installs. Visit → use.
 
 ---

@@ -2,7 +2,9 @@
 
 ## Overview
 
-Vektr_IDE is a browser-native agentic IDE. The browser stays open with your AI session (history, custom instructions, paid features), and the IDE injects prompts and reads responses via DOM automation. No API keys. No subscriptions. Just your existing browser sessions.
+VektrIDE is a browser-native agentic IDE that connects to AI chatbots via Chrome DevTools Protocol (CDP). The browser stays open with your AI session (history, custom instructions, paid features), and the IDE injects prompts and reads responses via Playwright automation. No API keys. No subscriptions. Just your existing browser sessions.
+
+**Distribution:** Available as a desktop app (Electron) or can be run from source. The desktop app bundles everything — Node.js, server, frontend, Playwright — into a single installer.
 
 ## Architecture Diagram
 
@@ -147,6 +149,9 @@ Server binds to `localhost` only. Key endpoints:
 | `/api/tabs` | GET | List open Chrome tabs with matched providers |
 | `/api/agent/start` | POST | Start agentic loop |
 | `/api/agent/stream` | GET | SSE stream of live log events |
+| `/api/git/snapshot` | POST | Git commit before agent runs |
+| `/api/notebooklm/export` | POST | Export project for NotebookLM |
+| `/api/notebooklm-push` | POST | One-click NotebookLM upload via Playwright |
 
 ---
 
@@ -171,6 +176,17 @@ Server binds to `localhost` only. Key endpoints:
 | `TaskRunner.js` | Runs shell commands (tests, lint, build), captures output |
 | `NotebookLMExporter.js` | Exports project to a single NotebookLM-ready text file |
 | `prompts.js` | Structured prompt templates |
+
+### Desktop App (`electron/`)
+| Module | Responsibility |
+|--------|---------------|
+| `main.cjs` | Electron main process, runs server.js internally |
+| `preload.cjs` | Secure IPC bridge between renderer and main process |
+
+### Playwright Bridge
+| Module | Responsibility |
+|--------|---------------|
+| `ide-backend.js` | CDP connection to Chrome, finds tabs, types prompts, reads responses |
 
 ---
 
@@ -247,14 +263,49 @@ install-context-menu.bat /remove  # Uninstall
 
 ## Persistence Model
 
-Vektr_IDE is a single Node.js process (no daemon, no service):
+### Desktop App (Electron)
+- Single native application window
+- Server runs internally (no terminal visible)
+- Auto-updater built-in
+- Settings persisted via localStorage
 
-1. `launch.bat` → opens Chrome with `--remote-debugging-port=9222`
-2. `node server.js` → Express on port 3001, serves `dist/` as static files
-3. Browser opens `http://localhost:3001`
-4. Terminal window IS the server — `Ctrl+C` to stop
+### From Source
+- Single Node.js process (no daemon, no service):
+  1. `launch.bat` → opens Chrome with `--remote-debugging-port=9222`
+  2. `node server.js` → Express on port 3001, serves `dist/` as static files
+  3. Browser opens `http://localhost:3001`
+  4. Terminal window IS the server — `Ctrl+C` to stop
 
 **localStorage** persists across sessions:
 - `vektr_system_prompt` — project context / system prompt
 - `vektr_recent_folders` — last 6 opened project paths
 - `vektride_session` — last goal + mode from Agent panel
+
+---
+
+## Mobile Companion
+
+VektrIDE includes a PWA/mobile companion that connects to the desktop via WebSocket:
+
+- Desktop runs the full agent (Playwright, shell commands)
+- Mobile app connects via local WiFi
+- Mobile sends commands, desktop executes, results stream back
+- QR code pairing for easy connection
+
+### WebSocket Protocol
+
+| Message Type | Direction | Description |
+|--------------|----------|-------------|
+| `ping` | Mobile → Desktop | Heartbeat |
+| `pong` | Desktop → Mobile | Heartbeat response |
+| `ask-ai` | Mobile → Desktop | Send prompt to AI |
+| `ai-response` | Desktop → Mobile | AI response |
+| `agent-start` | Mobile → Desktop | Start agentic task |
+| `agent-log` | Desktop → Mobile | Agent log event |
+| `agent-state` | Desktop → Mobile | Agent state update |
+| `agent-plan` | Desktop → Mobile | Generated plan |
+| `agent-step-complete` | Desktop → Mobile | Step completed |
+| `agent-complete` | Desktop → Mobile | Task finished |
+| `agent-approve` | Mobile → Desktop | Approve step (supervised) |
+| `agent-skip` | Mobile → Desktop | Skip step |
+| `agent-abort` | Mobile → Desktop | Abort task |

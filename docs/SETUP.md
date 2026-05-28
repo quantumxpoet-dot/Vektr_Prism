@@ -6,9 +6,21 @@
 
 ## What You Need (Prerequisites)
 
+### Option A: Download the Desktop App (Recommended)
+
+**Nothing to install.** Just download and run.
+
+- Windows: `.exe` installer (~60-80MB)
+- macOS: `.dmg` file
+- Linux: `.AppImage` or `.deb`
+
+The desktop app includes everything — Node.js, the server, the frontend, Playwright. One download, double-click, you're running.
+
+### Option B: Run from Source (Advanced)
+
 Before we start, you need **two things** installed on your Windows PC:
 
-### 1. Node.js (Required)
+#### 1. Node.js (Required)
 
 Node.js is the engine that runs VektrIDE's server.
 
@@ -32,7 +44,25 @@ You probably already have one of these. VektrIDE uses Chrome's developer mode to
 
 ---
 
-## Installation (First Time Only)
+## Installation (Desktop App)
+
+### Step 1: Download
+
+Download the installer for your OS from the releases page.
+
+### Step 2: Install
+
+- **Windows**: Run the `.exe`, follow the installer
+- **macOS**: Open the `.dmg`, drag to Applications
+- **Linux**: Make the `.AppImage` executable, run it
+
+### Step 3: Launch
+
+Double-click the VektrIDE icon. The app opens with the full IDE interface.
+
+---
+
+## Installation (From Source - Advanced)
 
 ### Option A: Double-Click Install (Easiest)
 
@@ -60,7 +90,7 @@ npm run build
 
 ---
 
-## Starting VektrIDE
+## Starting VektrIDE (From Source)
 
 ### Step 1: Launch VektrIDE
 
@@ -109,6 +139,13 @@ This step is only needed if you want to use the "Ask AI" or "Agent Mode" feature
 ---
 
 ## Using VektrIDE
+
+### Desktop App vs Browser
+
+- **Desktop App**: Opens the IDE directly in a native window. No browser needed.
+- **From Source**: Opens in your browser at `http://localhost:3001`
+
+Both have the same features. The desktop app is more convenient.
 
 ### Browsing Files
 
@@ -273,3 +310,16 @@ This step is only needed if you want to use the "Ask AI" or "Agent Mode" feature
 - Check the [Architecture Wiki](WIKI.md) for technical details
 - Edit `providers.json` to add new AI chatbots — no coding needed
 - All settings are in plain text files — nothing is hidden
+
+---
+
+## Mobile Companion
+
+VektrIDE includes a mobile companion that connects to your desktop app via local WiFi:
+
+1. Open VektrIDE on your desktop
+2. Click the mobile icon in the top-right
+3. Scan the QR code with your phone
+4. Your phone becomes a remote control for the desktop agent
+
+The desktop does all the heavy lifting (Playwright, shell commands), your phone is just the UI.

@@ -1,7 +1,19 @@
-# Vektr_IDE — Workflow Guide
+# VektrIDE — Workflow Guide
 
 ## Quick Start
 
+### Desktop App (Recommended)
+```
+1. Download and install VektrIDE
+2. Double-click to launch
+3. Open Chrome with CDP (app prompts you)
+4. Open any AI chatbot in Chrome
+5. Type a folder path → Enter
+6. Open a file
+7. Ask AI → Confirm Change
+```
+
+### From Source
 ```
 1. Run launch.bat                   # Opens Chrome with CDP enabled
 2. Open any AI chatbot in Chrome    # ChatGPT, Claude, Gemini, Manus, etc.
@@ -207,7 +219,11 @@ VektrIDE/
 │   ├── ProjectContext.js   # File scanning + AI context builder
 │   ├── CodeExtractor.js    # Extract code blocks from AI responses
 │   ├── TaskRunner.js       # Shell command runner (tests, lint)
-│   └── NotebookLMExporter.js
+│   ├── NotebookLMExporter.js
+│   └── prompts.js          # Structured prompt templates
+├── electron/               # Desktop app wrapper
+│   ├── main.cjs            # Electron main process
+│   └── preload.cjs         # IPC bridge
 ├── server.js               # Express API server
 ├── ide-backend.js          # Playwright/CDP bridge to browser tabs
 ├── providers.json          # 25+ provider configs (no rebuild needed)
