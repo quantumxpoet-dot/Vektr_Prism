@@ -16,6 +16,7 @@ import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 import { Server } from 'ws';
+import QRCode from 'qrcode';
 import { IDEBridge } from './ide-backend.js';
 import { AgentController } from './agent/AgentController.js';
 import { exportForNotebookLM } from './agent/NotebookLMExporter.js';
@@ -536,6 +537,26 @@ app.post('/api/ask-ai', async (req, res) => {
             response,
             filePath: filePath || null,
         });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/**
+ * GET /api/qr-code — Generate QR code for mobile pairing
+ * Returns base64 data URL of QR code containing WebSocket connection info
+ */
+app.get('/api/qr-code', async (req, res) => {
+    try {
+        const connectionInfo = {
+            host: 'localhost',
+            port: PORT,
+            path: '/mobile-companion',
+            timestamp: Date.now()
+        };
+        const qrData = JSON.stringify(connectionInfo);
+        const qrDataURL = await QRCode.toDataURL(qrData);
+        res.json({ qrCode: qrDataURL, connectionInfo });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
