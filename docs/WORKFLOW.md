@@ -1,111 +1,219 @@
-# Vektr Prism — Workflow Guide
+# Vektr_IDE — Workflow Guide
 
-## How Vektr Prism Works
-
-Vektr Prism uses your existing AI chatbot sessions as a coding agent. No API keys, no subscriptions — just your browser.
+## Quick Start
 
 ```
-You type a prompt
-    → Vektr Prism copies it to your clipboard
-    → Your AI tab opens (ChatGPT, Claude, Gemini, etc.)
-    → You paste the prompt, get the response, copy it
-    → Click "Paste Response"
-    → AI response appears in your IDE
+1. Run launch.bat                   # Opens Chrome with CDP enabled
+2. Open any AI chatbot in Chrome    # ChatGPT, Claude, Gemini, Manus, etc.
+3. node server.js                   # Start API server (port 3001)
+4. Open http://localhost:3001       # Open the IDE
+5. Type a folder path → Enter       # Load your project
+6. Open a file                      # File content is ready for AI context
+7. Ask AI → Confirm Change          # Done
 ```
 
 ---
 
-## Getting Started (First Run)
+## Layout
 
-1. **Visit** `vektrprism.site` in Chrome or Edge
-2. **Onboarding**: Select which AI chatbots you use — they open in popups for you to sign in
-3. **Open Folder**: Click "📂 Open Folder" → browser's native folder picker → grant access
-4. **Pick a file** from the Explorer → it opens in Monaco Editor
-5. **Ask AI** in the Chat panel
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  [🔮 Vektr_IDE]  [filename]    [⚡ Manual][🤖 Agent]   [⚙️ D]   │
+├──────────────┬────────────────────────┬──|──┬────────────────────┤
+│  Explorer    │  Editor                │drag │  Chat / Agent      │
+│              │                        │     │                    │
+│  📁 src      │  Monaco (VS Light)     │  ←→ │  [System Prompt⚙] │
+│  📄 App.jsx  │  JetBrains Mono        │     │  [Bubbles...]      │
+│  📄 ...      │                        │     │  [📎 include file] │
+│  ─────────── │                        │     │  [🚀 Ask AI]       │
+│  Recent ▾   │                        │     │                    │
+├──────────────┴────────────────────────┴─────┴────────────────────┤
+│  status bar                                                      │
+└──────────────────────────────────────────────────────────────────┘
+```
 
----
-
-## Manual Mode (Day-to-Day Coding)
-
-### Asking AI about code
-1. Select a file in Explorer
-2. Enable **📎 Include file** toggle (auto-includes file content in prompt)
-3. Type your question → press **Enter** or click **Ask AI**
-4. Prompt copies to clipboard → your AI tab opens
-5. Paste prompt → copy response → click **📥 Paste Response**
-
-### Applying AI changes
-- When a response contains code: **✅ Confirm** applies and saves it
-- **🔍 Diff** previews the exact changes before saving
-- **Ctrl+S** saves the current file at any time
-- **Ctrl+K** — focus the prompt input
-- **↑/↓** — cycle through prompt history
-
-### System Prompt (Project Context)
-- Click **⚙️** in chat header → type your project context
-- Example: `"React 19 + TypeScript. Use functional components. Tailwind for styles."`
-- Prepended silently to every prompt — AI always knows your stack
+**Resize**: Drag the `|` divider between the editor and chat panel.
 
 ---
 
-## Agent Mode (Multi-Step Tasks)
+## Manual Mode Workflow
 
-Agent mode breaks big goals into a numbered plan and executes them step by step.
+### 1. Open a Project
+- Enter path in the sidebar (e.g. `C:\projects\my-app`) → Enter
+- Or click a **Recent** folder (last 6 projects auto-saved)
 
-### How it runs
-1. **Describe your goal** — e.g. "Add JWT auth with login/register routes"
-2. Click **▶ Start Agent**
-3. Planning prompt copies → paste into AI → copy the JSON plan → click **📥 Paste Plan**
-4. Agent shows the step-by-step plan
-5. Click **▶ Execute Step 1** → code prompt copies → paste into AI → copy code → click **📥 Paste Code**
-6. Repeat for each step — progress bar tracks completion
+### 2. Set Project Context (optional, do once)
+Click ⚙️ in the chat header → type your stack context:
+```
+React + TypeScript, functional components, Tailwind CSS.
+Always return typed code. Never use 'any'.
+```
+This is prepended to every prompt silently — set it once and forget.
 
-### Task templates (quick start)
-- 🔐 Add auth
-- 🧪 Write tests
-- 🛡️ Error handling
-- 📄 Add docs
-- 🔄 Convert to TypeScript
-- ⚡ Optimize performance
+### 3. Open a file
+Click any file in the Explorer. The file content is immediately available for AI context.
 
----
+### 4. Ask AI
+- Type in the prompt input
+- Toggle **📎 Include file** if you want file content sent with the prompt (on by default)
+- Press `Enter` or click **🚀 Ask AI**
 
-## Switching AI Providers
+### 5. Review & Confirm
+- AI response appears as a bubble
+- Click **🔍 Diff** to see a +/- preview of changes
+- Click **✅ Confirm** or press `Ctrl+S` to write to disk
 
-- **Chat panel**: Provider dropdown in header — switch anytime mid-conversation
-- **Agent panel**: Provider selector at top — affects all prompts in current run
-- **Add more**: Open any AI chatbot site you want to use → sign in → it's ready
-- Vektr Prism remembers your last used provider across sessions
-
----
-
-## File Operations
-
-| Action | How |
-|--------|-----|
-| Open folder | Click "📂 Open Folder" |
-| Re-open last folder | Loads automatically on next visit |
-| Re-grant access | Click "Re-connect" if Chrome revokes permission |
-| Save file | Ctrl+S or "💾 Save" button |
-| Apply AI response | "✅ Confirm" button in chat |
+### 6. Repeat
+- `Ctrl+K` to focus prompt from anywhere
+- `↑ / ↓` to cycle through your prompt history
 
 ---
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+Enter` | Send prompt |
+| Key | Action |
+|-----|--------|
+| `Enter` | Send prompt |
+| `Shift+Enter` | New line in prompt |
+| `↑ / ↓` | Prompt history |
 | `Ctrl+K` | Focus prompt input |
-| `Ctrl+S` | Save file / confirm change |
-| `↑ / ↓` | Navigate prompt history |
-| `Shift+Enter` | New line in prompt (no send) |
+| `Ctrl+S` | Confirm & save AI response |
 
 ---
 
-## Tips
+## Agent Mode Workflow
 
-- **Include file toggle**: Turn off if you're asking a general question to save prompt space
-- **System prompt**: Set it once per project, forget it — AI always has context
-- **Prompt history**: Use ↑ to recall and refine your last prompt
-- **Multiple AI tabs**: Open ChatGPT, Claude, and Gemini simultaneously — switch providers per question
+Switch to **🤖 Agent** in the top nav.
+
+### 1. Pick your AI tab
+Click 🔄 to refresh open Chrome tabs. Select the tab with your AI session.
+
+### 2. Set goal
+Use a template chip or type your own:
+```
+Add JWT authentication with login and register routes
+```
+
+### 3. Choose mode
+- **Supervised** — pauses after plan + after each step for your approval
+- **Autonomous** — runs full loop unattended
+
+### 4. Start
+Click **▶ Start Agent**. Watch the live log stream.
+
+### 5. Approve steps (supervised only)
+Click **✅ Approve** to continue, **⏭ Skip** to skip a step, or **🛑 Abort** to stop.
+
+### 6. After completion
+- **📸 Git Snapshot** — commits current state with an auto message
+- **📤 Export to NotebookLM** — bundles your codebase for NotebookLM upload
+
+---
+
+## Provider Selection
+
+Vektr_IDE supports **25+ providers** via `providers.json`. No code change needed to add a new one.
+
+### How Auto-Detect Works
+1. VektrIDE reads all open Chrome tabs via CDP
+2. Matches each tab's URL against `urlPattern` in `providers.json`
+3. First match wins — that tab receives the prompt
+4. Falls back to generic CSS selectors if nothing matches
+
+### Provider Categories
+
+| Category | Examples |
+|----------|---------|
+| Chatbots | ChatGPT, Claude, Gemini, Grok, Copilot, Meta AI, DeepSeek |
+| Agentic | **Manus**, Google AI Studio, Poe |
+| Enterprise Cloud | Vertex AI Studio, **Agent Builder**, Agentspace, AWS Bedrock, Azure AI Foundry |
+| Document Chat | **NotebookLM**, ChatPDF |
+| Open Source | HuggingChat, Ollama, LM Studio, Cohere |
+| Search | Perplexity, Phind, You.com |
+
+### Adding a Custom Provider
+Open `providers.json`, copy any block, and change:
+- `urlPattern` → substring of the site's URL
+- `inputSelector` → CSS selector for the chat input
+- `responseSelector` → CSS selector for the response text
+
+---
+
+## File Watcher
+
+When another process modifies an open file (agent writes, Git pull, external editor):
+
+1. Vektr_IDE polls `/api/file-mtime` every 3 seconds
+2. If the timestamp changes, a pulsing ⟳ banner appears in the tab bar
+3. Click it to reload the file — no data is lost from the editor
+
+---
+
+## Context Menu (One-Time Setup)
+
+Add "Open in Vektr_IDE" to Windows Explorer right-click:
+
+```cmd
+# Run as Administrator
+install-context-menu.bat
+
+# To remove
+install-context-menu.bat /remove
+```
+
+After running, right-click any folder in Explorer → **Open in Vektr_IDE**.
+
+---
+
+## NotebookLM Integration
+
+Use NotebookLM as a deep-understanding backend for your codebase:
+
+1. Click **📤 Export to NotebookLM** in the Agent panel
+2. Upload the generated `.txt` file as a Source in NotebookLM
+3. Set `notebooklm` as your provider in Vektr_IDE chat
+4. Ask architecture questions, get answers grounded in your actual code
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| No response from AI | Chrome must be open with your AI tab visible |
+| "CDP not connected" | Re-run `launch.bat`, wait for Chrome to open fully |
+| Wrong tab selected | Click 🔄 in Agent panel to refresh tab list |
+| Provider not detected | Check `providers.json` — `urlPattern` must match the tab URL |
+| File not saving | Check server is running (`node server.js`) |
+| Build changes not visible | Run `npm run build`, hard-refresh (`Ctrl+Shift+R`) |
+
+---
+
+## Project Structure
+
+```
+VektrIDE/
+├── src/                    # React frontend
+│   ├── App.jsx             # Root: layout, drag-resize, file watcher
+│   ├── index.css           # Full design system (CSS vars, components)
+│   └── components/
+│       ├── TopNav.jsx      # Navigation bar
+│       ├── Sidebar.jsx     # File tree + recent folders
+│       ├── Editor.jsx      # Monaco editor wrapper
+│       ├── ChatPanel.jsx   # Conversation UI (system prompt, diff, history)
+│       └── AgentPanel.jsx  # Agentic loop control
+├── agent/                  # Server-side agent engine
+│   ├── AgentController.js  # Plan→Execute→Verify→Iterate loop
+│   ├── ProjectContext.js   # File scanning + AI context builder
+│   ├── CodeExtractor.js    # Extract code blocks from AI responses
+│   ├── TaskRunner.js       # Shell command runner (tests, lint)
+│   └── NotebookLMExporter.js
+├── server.js               # Express API server
+├── ide-backend.js          # Playwright/CDP bridge to browser tabs
+├── providers.json          # 25+ provider configs (no rebuild needed)
+├── launch.bat              # Launches Chrome with CDP + server
+├── install-context-menu.bat # Windows Explorer right-click installer
+└── docs/
+    ├── WIKI.md             # Architecture reference
+    └── WORKFLOW.md         # This file
+```

@@ -1,17 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import providersData from '../../providers.json';
 
-// Static provider list — loaded at build time, no server needed
-const STATIC_PROVIDERS = (providersData.providers || [])
-    .filter(p => p.id && !p._section)
-    .map(p => ({ id: p.id, name: p.name }));
+const API = '/api';
 
-export default function ChatPanel({ currentFile, onAsk, onConfirm, onPasteResponse, pendingResponse, isLoading }) {
+export default function ChatPanel({ currentFile, onAsk, onConfirm, isLoading }) {
     const [prompt, setPrompt] = useState('');
     const [messages, setMessages] = useState([]);
-    const [selectedProvider, setSelectedProvider] = useState(
-        () => localStorage.getItem('vektr_last_provider') || 'chatgpt'
-    );
+    const [providers, setProviders] = useState([]);
+    const [selectedProvider, setSelectedProvider] = useState('generic');
     const [systemPrompt, setSystemPrompt] = useState(
         () => localStorage.getItem('vektr_system_prompt') || ''
     );
@@ -19,16 +14,29 @@ export default function ChatPanel({ currentFile, onAsk, onConfirm, onPasteRespon
     const [includeFile, setIncludeFile] = useState(true);
     const [promptHistory, setPromptHistory] = useState([]);
     const [historyIdx, setHistoryIdx] = useState(-1);
-    const [pendingDiff, setPendingDiff] = useState(null);
+    const [pendingDiff, setPendingDiff] = useState(null); // { original, updated }
     const [copiedId, setCopiedId] = useState(null);
 
     const bottomRef = useRef(null);
     const inputRef = useRef(null);
 
-    // Persist selected provider
+    // Load providers
     useEffect(() => {
-        localStorage.setItem('vektr_last_provider', selectedProvider);
-    }, [selectedProvider]);
+        fetch(`${API}/providers`)
+            .then(r => r.json())
+            .then(data => {
+                const list = (data.providers || []).filter(p => !p._section);
+                setProviders(list);
+                if (data.openTabs?.length > 0) setSelectedProvider(data.openTabs[0].providerId);
+                else if (list.length > 0) setSelectedProvider(list[0].id);
+            })
+            .catch(() => setProviders([
+                { id: 'generic', name: 'Auto-Detect' },
+                { id: 'chatgpt', name: 'ChatGPT' },
+                { id: 'claude', name: 'Claude' },
+                { id: 'gemini', name: 'Gemini' },
+            ]));
+    }, []);
 
     // Persist system prompt
     useEffect(() => {
@@ -76,27 +84,19 @@ export default function ChatPanel({ currentFile, onAsk, onConfirm, onPasteRespon
         fullPrompt += userMsg;
 
         const response = await onAsk(fullPrompt, selectedProvider);
-        // response is null in clipboard mode (Paste Response handles it)
-        if (response) addAIMessage(response);
+        if (response) {
+            const newMsg = {
+                id: Date.now() + 1,
+                role: 'ai',
+                text: response,
+                provider: selectedProvider,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                canConfirm: !!currentFile,
+                originalContent: currentFile?.content || null,
+            };
+            setMessages(prev => [...prev, newMsg]);
+        }
     }, [prompt, isLoading, systemPrompt, includeFile, currentFile, onAsk, selectedProvider]);
-
-    const addAIMessage = useCallback((text) => {
-        setMessages(prev => [...prev, {
-            id: Date.now() + 1,
-            role: 'ai',
-            text,
-            provider: selectedProvider,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            canConfirm: !!currentFile,
-            originalContent: currentFile?.content || null,
-        }]);
-    }, [selectedProvider, currentFile]);
-
-    // Clipboard bridge: paste response handler
-    const handlePasteResponse = useCallback(async () => {
-        const text = await onPasteResponse?.();
-        if (text?.trim()) addAIMessage(text);
-    }, [onPasteResponse, addAIMessage]);
 
     const handleKey = (e) => {
         // Send on Enter (not shift)
@@ -167,7 +167,7 @@ export default function ChatPanel({ currentFile, onAsk, onConfirm, onPasteRespon
                     value={selectedProvider}
                     onChange={e => setSelectedProvider(e.target.value)}
                 >
-                    {STATIC_PROVIDERS.map(p => (
+                    {providers.map(p => (
                         <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                 </select>
@@ -261,16 +261,6 @@ export default function ChatPanel({ currentFile, onAsk, onConfirm, onPasteRespon
                         )}
                     </div>
                 ))}
-
-                {/* Clipboard mode: Paste Response banner */}
-                {pendingResponse && (
-                    <div className="paste-response-banner">
-                        <span>📋 Prompt copied! Switch to <strong>{pendingResponse.providerId}</strong>, paste, get the response, copy it, then:</span>
-                        <button className="paste-response-btn" onClick={handlePasteResponse}>
-                            📥 Paste Response
-                        </button>
-                    </div>
-                )}
 
                 {isLoading && (
                     <div className="chat-message ai">

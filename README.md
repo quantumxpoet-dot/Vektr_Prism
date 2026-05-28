@@ -1,120 +1,146 @@
-# Vektr Prism
+# VektrIDE
 
-> **A free, agentic IDE powered by the AI chatbots you already use.**  
-> No API keys. No subscriptions. No downloads. Just open `vektrprism.site`.
+> **The AI IDE that works with the AI you already pay for.**  
+> No API keys. No switching tools. No per-token billing.
 
----
-
-## The Problem
-
-Every agentic IDE — Cursor, Copilot, Cline, Windsurf — charges you for AI access. Per-token billing. Monthly subscriptions. API keys you have to manage.
-
-Meanwhile, **the best AI models in the world are free to use** through their own chat interfaces: ChatGPT, Claude, Gemini, Grok, DeepSeek, Meta AI, Perplexity — all have free tiers with frontier models.
-
-**Vektr Prism bridges the gap.** It turns those free chat interfaces into a full agentic coding environment.
+> *"A 9/10 innovation — not for advancing model architecture, but for eliminating the economic and infrastructure barriers that prevent most developers from accessing frontier AI development tools."*  
+> — [Full Innovation Assessment →](docs/INNOVATION.md)
 
 ---
 
-## How It Works
+## The Problem With Every Other Agentic IDE
+
+Cursor, GitHub Copilot, Cline, Aider, Continue — they all share one fundamental assumption: **the AI is a remote API you call with a key.**
+
+That assumption has consequences:
+
+| The Current Paradigm | What It Costs You |
+|---------------------|------------------|
+| API key per provider | Locked to 1-2 models based on price |
+| Per-token billing | You ration prompts. Agents get expensive fast. |
+| API-only features | No custom GPTs, no Gems, no NotebookLM, no artifacts |
+| Fresh context per call | No conversation history, no system prompts |
+| Closed model list | New model ships? Wait for SDK update. |
+
+**VektrIDE flips the assumption.**
+
+---
+
+## The VektrIDE Approach: Browser-Native AI
+
+VektrIDE connects to any AI chatbot running in your browser using Chrome DevTools Protocol. No API. No key. No billing.
 
 ```
-vektrprism.site  →  Your Browser  →  Your AI Chatbot Tabs
-       ↕                                      ↕
-  File System Access API              Free AI (ChatGPT, Claude, Gemini, etc.)
-       ↕
-  Your Local Files
+Your Browser Tab (ChatGPT / Claude / Gemini / NotebookLM / Grok / anything)
+        ↕  Chrome DevTools Protocol (local, zero latency)
+   VektrIDE Agent (plans, executes, verifies, iterates)
+        ↕  File System API (read/write any local file)
+   Your Codebase
 ```
 
-1. Visit **vektrprism.site** — no install, no download
-2. Click **📂 Open Folder** — browser reads your local files directly
-3. Pick your AI chatbots during onboarding (multi-select)
-4. Code → Ask AI → apply changes → iterate
+This means:
 
-**Zero cost. Zero setup. Zero API keys.**
+- **Use any model** — if it has a chat interface, it works
+- **Zero marginal cost** — use your existing subscription as much as you want
+- **Full feature access** — custom GPTs, Gems, NotebookLM notebooks, memory, artifacts
+- **Persistent context** — conversation history stays across agent steps
+- **One config file** — add any new chatbot in 5 lines of JSON, no code change
 
 ---
 
-## Why This Is Different
+## What Makes This Genuinely Different
 
-| Feature | Cursor / Copilot | Vektr Prism |
-|---------|-----------------|-------------|
-| Cost | $20–40/mo subscription | **Free** |
-| AI models | Locked to their list | **Any chatbot with a free tier** |
-| API keys | Required | **None needed** |
-| Install | Desktop app download | **Just open the website** |
-| NotebookLM | ❌ | ✅ Deep codebase understanding |
-| Custom GPTs / Gems | ❌ | ✅ Full access |
+### NotebookLM Integration (Free, Semantic Understanding)
+
+Upload your codebase to Google NotebookLM. It builds a **semantic knowledge base** from every file. When the agent asks "how does auth work in this project?" — NotebookLM *actually knows*, because it read everything. This is code intelligence that paid agentic IDEs don't offer at any price tier.
+
+### AST-Aware Context (v3)
+
+The agent doesn't dump raw file text into prompts. It parses your code structure — functions, classes, imports, call graphs — and sends a semantic map. The AI sees what your code *does*, not just what it *says*.
+
+### Dependency-Aware Execution (v3)
+
+Before modifying a file, the agent scans the dependency graph to find every file that imports it. Those files are automatically included in the AI's context. No more "fixed auth.js but broke the 4 routes that import it."
+
+### Causal Error Reasoning (v3)
+
+When tests fail, the agent doesn't just retry the same prompt. It diffs the exact change that was made, traces the stack to the specific modified line, and builds a surgical fix prompt. This is the difference between "fix this error" and "you changed line 47 from `export function` to `export const` and that's why the named import broke."
+
+---
+
+## Feature Comparison
+
+| Feature | Cursor / Copilot / Cline | VektrIDE |
+|---------|--------------------------|---------|
+| AI models | Locked to their list | **Any chat UI, any model** |
+| Cost | Per-token API billing | **Your existing subscription** |
+| NotebookLM | ❌ | ✅ **Free, full semantic understanding** |
+| Custom GPTs / Gems | ❌ | ✅ |
 | Conversation history | ❌ (each call is fresh) | ✅ (browser session persists) |
-| Add new AI provider | Wait for update | **You can add any chatbot** |
-| Privacy | Code sent to their servers | **Code never leaves your machine** |
-
----
-
-## Supported AI Providers (All Free Tier)
-
-| Provider | What you get free |
-|----------|-------------------|
-| **ChatGPT** | GPT-4o, custom GPTs |
-| **Claude** | Claude 3.5 Sonnet, Projects |
-| **Gemini** | Gemini 1.5 Pro, Gems |
-| **Grok** | Grok 2, real-time web |
-| **DeepSeek** | R1, V3 — fully free |
-| **Meta AI** | Llama 4 — fully free |
-| **Copilot** | GPT-4 via Microsoft — free |
-| **Perplexity** | AI search + reasoning |
-| **NotebookLM** | Codebase-grounded AI — free |
-| **Google AI Studio** | Gemini API playground — free |
-
----
-
-## Features
-
-- **🔮 Browser-native IDE** — Monaco Editor, file explorer, syntax highlighting
-- **💬 AI Chat Panel** — prompt history, system context, diff preview
-- **🤖 Agent Mode** — PLAN → EXECUTE → VERIFY → ITERATE across files
-- **📂 Local File Access** — reads/writes your files via File System Access API
-- **📓 NotebookLM Integration** — one-click export for deep codebase analysis
-- **⌨️ Keyboard Shortcuts** — Ctrl+Enter (send), Ctrl+K (focus), ↑/↓ (history)
-- **🎨 Premium UI** — ambient light design, depth system, glassmorphism
+| Add new model | Wait for SDK update | **Edit one JSON file** |
+| Local/private models | Some | ✅ (anything with a web UI) |
+| AST-aware context | Some | ✅ (v3) |
+| Dependency graph | Some | ✅ (v3) |
+| Causal error tracing | ❌ | ✅ (v3) |
 
 ---
 
 ## Quick Start
 
-1. Open **[vektrprism.site](https://vektrprism.site)** in Chrome/Edge
-2. Select your AI chatbots during onboarding
-3. Click **📂 Open Folder** to load your project
-4. Start coding with AI
+```powershell
+# First time only
+install.bat
+
+# Every time — opens your browser automatically
+launch.bat
+```
+
+For AI features, open Chrome in debug mode:
+```powershell
+chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug"
+```
+Navigate to any AI chatbot. VektrIDE finds it automatically.
 
 ---
 
 ## Modes
 
-**⚡ Manual** — Open a file, ask AI anything, review the response, apply changes. Full control.
+**⚡ Manual** — Open file → prompt → review → confirm. Full control, one file at a time.
 
-**🤖 Agent** — Describe a goal. The agent plans multi-file changes, executes them, and iterates on failures. Supervised or autonomous.
-
----
-
-## Privacy
-
-- Your code **never leaves your machine** — File System Access API is browser-local
-- Your AI conversations stay in **your own browser sessions**
-- No telemetry, no analytics, no data collection
-- Vektr Prism is a static website — there is no backend server
+**🤖 Agent** — Type a goal. The agent plans steps, executes them across multiple files, runs tests, and iterates on failures. Supervised (you approve each step) or Autonomous (runs to completion).
 
 ---
 
-## Tech Stack
+## Docs
 
-- **Frontend**: React + Monaco Editor + vanilla CSS
-- **File I/O**: File System Access API (Chrome 86+)
-- **AI Bridge**: Clipboard + cross-tab communication
-- **Hosting**: Cloudflare Pages (static)
-- **Persistence**: IndexedDB + localStorage
-- **Dependencies**: Zero server-side. Pure browser.
+- 📖 [Setup Guide](docs/SETUP.md) — Step-by-step install + troubleshooting
+- 🔄 [Workflow Guide](docs/WORKFLOW.md) — What to expect when using VektrIDE
+- 🏗️ [Architecture Wiki](docs/WIKI.md) — How it works under the hood
+- ❓ [FAQ](docs/FAQ.md) — Common questions answered
+- 💡 [Innovation Assessment](docs/INNOVATION.md) — Why this is a genuine paradigm shift (9/10)
 
 ---
+
+## Project Structure
+
+```
+VektrIDE/
+├── launch.bat / install.bat     # Launch (opens browser automatically)
+├── server.js                    # Express API + static server
+├── ide-backend.js               # Universal Playwright bridge
+├── providers.json               # Provider config (any chat UI)
+├── agent/
+│   ├── AgentController.js       # Orchestrator (PLAN→EXECUTE→VERIFY→ITERATE)
+│   ├── ProjectContext.js        # Project scanner + context builder
+│   ├── ASTContext.js            # Code structure parser (v3)
+│   ├── DependencyGraph.js       # Import graph + impact radius (v3)
+│   ├── ErrorAnalyzer.js         # Causal error tracer (v3)
+│   ├── CodeExtractor.js         # AI response parser
+│   ├── TaskRunner.js            # Shell command executor
+│   └── prompts.js               # Structured prompt templates
+├── src/                         # React frontend (Monaco Editor)
+└── dist/                        # Production build
+```
 
 ## License
 

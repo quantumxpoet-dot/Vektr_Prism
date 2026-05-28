@@ -4,13 +4,12 @@ import Sidebar from './components/Sidebar.jsx';
 import Editor from './components/Editor.jsx';
 import ChatPanel from './components/ChatPanel.jsx';
 import AgentPanel from './components/AgentPanel.jsx';
-import OnboardingWizard from './components/OnboardingWizard.jsx';
-import * as FS from './lib/fileSystem.js';
-import * as AI from './lib/aiBridge.js';
 
+const API = '/api';
 const MIN_CHAT_WIDTH = 260;
 const MAX_CHAT_WIDTH = 600;
 
+// Mobile bottom tab config
 const MOBILE_TABS = [
     { id: 'explorer', label: 'Files', icon: '📁' },
     { id: 'editor', label: 'Editor', icon: '⌨️' },
@@ -30,92 +29,105 @@ function useMobile() {
 }
 
 export default function App() {
-    const [currentFile, setCurrentFile] = useState(null); // { path, content, extension, handle, lastModified }
-    const [currentDirName, setCurrentDirName] = useState('');
+    const [currentFile, setCurrentFile] = useState(null);
+    const [currentDir, setCurrentDir] = useState('');
     const [isAsking, setIsAsking] = useState(false);
     const [viewMode, setViewMode] = useState('manual');
     const [toast, setToast] = useState(null);
     const [chatWidth, setChatWidth] = useState(350);
-    const [mobileTab, setMobileTab] = useState('chat');
-    const [showOnboarding, setShowOnboarding] = useState(
-        () => !localStorage.getItem('vektr_onboarding_done')
-    );
-    // Clipboard bridge state
-    const [pendingResponse, setPendingResponse] = useState(null);
+    const [fileStale, setFileStale] = useState(false);
+    const [mobileTab, setMobileTab] = useState('chat'); // default to chat on mobile
 
     const isMobile = useMobile();
     const isDragging = useRef(false);
     const dragStartX = useRef(0);
     const dragStartWidth = useRef(0);
+    const watchIntervalRef = useRef(null);
 
     const showToast = useCallback((msg, type = 'info') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3500);
     }, []);
 
-    // File opened from Sidebar (receives { path, content, extension, handle, lastModified })
-    const onFileOpen = useCallback((fileData) => {
-        setCurrentFile(fileData);
-        if (isMobile) setMobileTab('editor');
-    }, [isMobile]);
+    // File watcher — poll for external changes every 3s
+    useEffect(() => {
+        if (!currentFile?.path) {
+            clearInterval(watchIntervalRef.current);
+            setFileStale(false);
+            return;
+        }
+        watchIntervalRef.current = setInterval(async () => {
+            try {
+                const res = await fetch(`${API}/file-mtime?path=${encodeURIComponent(currentFile.path)}`);
+                const data = await res.json();
+                if (data.mtime && data.mtime !== currentFile.mtime) setFileStale(true);
+            } catch { }
+        }, 3000);
+        return () => clearInterval(watchIntervalRef.current);
+    }, [currentFile?.path, currentFile?.mtime]);
+
+    const openFile = useCallback(async (filePath) => {
+        try {
+            const res = await fetch(`${API}/file?path=${encodeURIComponent(filePath)}`);
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            setCurrentFile({ path: data.path, content: data.content, extension: data.extension, mtime: data.mtime });
+            setFileStale(false);
+            // On mobile: switch to editor after opening file
+            if (isMobile) setMobileTab('editor');
+        } catch (e) {
+            showToast(`Failed to open: ${e.message}`, 'error');
+        }
+    }, [showToast, isMobile]);
+
+    const reloadFile = useCallback(() => {
+        if (currentFile?.path) openFile(currentFile.path);
+    }, [currentFile, openFile]);
 
     const onEditorChange = useCallback((value) => {
         setCurrentFile(prev => prev ? { ...prev, content: value } : null);
     }, []);
 
-    // Save current file via File System Access API
-    const saveFile = useCallback(async (content) => {
-        if (!currentFile?.handle) return;
-        try {
-            await FS.writeFile(currentFile.handle, content ?? currentFile.content);
-            showToast('Saved ✓', 'success');
-        } catch (e) {
-            showToast('Save failed: ' + e.message, 'error');
-        }
-    }, [currentFile, showToast]);
-
-    // Ask AI via clipboard bridge or API key mode
     const askAI = useCallback(async (prompt, providerId) => {
         if (!prompt.trim()) return null;
         setIsAsking(true);
         try {
-            const result = await AI.askAI(prompt, providerId || 'chatgpt');
-            if (result.mode === 'clipboard') {
-                // Show "paste response" UI
-                setPendingResponse({ providerId, prompt });
-                showToast('Prompt copied! Paste response when ready.', 'info');
-                return null; // response comes via pasteResponse()
-            }
-            // API mode — got response directly
-            return result.response;
+            const res = await fetch(`${API}/ask-ai`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, code: '', provider: providerId, filePath: currentFile?.path || '' }),
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            showToast(`✓ Response from ${data.provider}`, 'success');
+            return data.response;
         } catch (e) {
             showToast(e.message, 'error');
-            return null;
+            return `Error: ${e.message}`;
         } finally {
             setIsAsking(false);
         }
-    }, [showToast]);
+    }, [currentFile, showToast]);
 
-    // "Paste Response" button handler — reads clipboard
-    const pasteResponse = useCallback(async () => {
-        const text = await AI.readClipboardResponse();
-        setPendingResponse(null);
-        return text;
-    }, []);
-
-    // Apply AI response to file
     const confirmChange = useCallback(async (content) => {
-        if (!currentFile?.handle || !content) return;
+        if (!currentFile?.path || !content) return;
         try {
-            await FS.writeFile(currentFile.handle, content);
-            setCurrentFile(prev => ({ ...prev, content }));
-            showToast('Applied & saved ✓', 'success');
+            const res = await fetch(`${API}/save-file`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: currentFile.path, content }),
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            setCurrentFile(prev => ({ ...prev, content, mtime: data.mtime || prev.mtime }));
+            setFileStale(false);
+            showToast('Saved ✓', 'success');
         } catch (e) {
-            showToast('Save failed: ' + e.message, 'error');
+            showToast(`Save failed: ${e.message}`, 'error');
         }
     }, [currentFile, showToast]);
 
-    // Drag-to-resize chat panel (desktop)
+    // Drag-to-resize (desktop only)
     const onDividerMouseDown = (e) => {
         e.preventDefault();
         isDragging.current = true;
@@ -140,33 +152,38 @@ export default function App() {
             currentFile={currentFile}
             onAsk={askAI}
             onConfirm={confirmChange}
-            onPasteResponse={pasteResponse}
-            pendingResponse={pendingResponse}
             isLoading={isAsking}
         />
     );
 
-    const agentPanel = <AgentPanel currentDir={currentDirName} />;
+    const agentPanel = <AgentPanel currentDir={currentDir} />;
 
-    // ── MOBILE ────────────────────────────────────────────────────
+    // ── MOBILE LAYOUT ────────────────────────────────────────────
     if (isMobile) {
         return (
             <div className="ide-root mobile">
-                {showOnboarding && <OnboardingWizard onComplete={() => setShowOnboarding(false)} />}
                 <TopNav viewMode={viewMode} setViewMode={setViewMode} currentFile={currentFile} />
                 <div className="mobile-body">
                     {mobileTab === 'explorer' && (
-                        <Sidebar onFileSelect={onFileOpen} onDirOpen={setCurrentDirName} />
+                        <Sidebar
+                            currentDir={currentDir}
+                            onDirChange={setCurrentDir}
+                            onFileSelect={(p) => { openFile(p); }}
+                            activeFile={currentFile?.path}
+                        />
                     )}
                     {mobileTab === 'editor' && (
                         <div className="mobile-editor-wrap">
                             <div className="tab-bar">
                                 <div className="tab active">
                                     {currentFile
-                                        ? <><span className="tab-icon">📄</span><span>{currentFile.path.split('/').pop()}</span></>
+                                        ? <><span className="tab-icon">📄</span><span>{currentFile.path.split('\\').pop()}</span></>
                                         : <><span className="tab-icon">🏠</span><span>No file open</span></>
                                     }
                                 </div>
+                                {fileStale && (
+                                    <button className="stale-banner" onClick={reloadFile}>⟳ Reload</button>
+                                )}
                             </div>
                             <div className="editor-area">
                                 <Editor file={currentFile} onChange={onEditorChange} />
@@ -176,6 +193,8 @@ export default function App() {
                     {mobileTab === 'chat' && (viewMode === 'manual' ? chatPanel : agentPanel)}
                     {mobileTab === 'agent' && agentPanel}
                 </div>
+
+                {/* Mobile bottom tab bar */}
                 <nav className="mobile-bottom-nav">
                     {MOBILE_TABS.map(tab => (
                         <button
@@ -188,29 +207,34 @@ export default function App() {
                         </button>
                     ))}
                 </nav>
+
                 {toast && <div className={`toast ${toast.type}`}>{toast.msg}</div>}
             </div>
         );
     }
 
-    // ── DESKTOP ───────────────────────────────────────────────────
+    // ── DESKTOP LAYOUT ───────────────────────────────────────────
     return (
         <div className="ide-root">
-            {showOnboarding && <OnboardingWizard onComplete={() => setShowOnboarding(false)} />}
             <TopNav viewMode={viewMode} setViewMode={setViewMode} currentFile={currentFile} />
             <div className="ide-body">
-                <Sidebar onFileSelect={onFileOpen} onDirOpen={setCurrentDirName} />
+                <Sidebar
+                    currentDir={currentDir}
+                    onDirChange={setCurrentDir}
+                    onFileSelect={openFile}
+                    activeFile={currentFile?.path}
+                />
                 <div className="editor-column">
                     <div className="tab-bar">
                         <div className="tab active">
                             {currentFile
-                                ? <><span className="tab-icon">📄</span><span>{currentFile.path.split('/').pop()}</span></>
+                                ? <><span className="tab-icon">📄</span><span>{currentFile.path.split('\\').pop()}</span></>
                                 : <><span className="tab-icon">🏠</span><span>Welcome</span></>
                             }
                         </div>
-                        {currentFile && (
-                            <button className="save-btn" onClick={() => saveFile()} title="Save (Ctrl+S)">
-                                💾 Save
+                        {fileStale && (
+                            <button className="stale-banner" onClick={reloadFile}>
+                                ⟳ File changed externally — reload?
                             </button>
                         )}
                     </div>
@@ -218,12 +242,10 @@ export default function App() {
                         <Editor file={currentFile} onChange={onEditorChange} />
                     </div>
                     <div className="status-bar">
-                        <div className="status-left">
-                            <span>{currentFile ? currentFile.path : 'No file open'}</span>
-                        </div>
+                        <div className="status-left"><span>{currentFile ? currentFile.path : 'No file open'}</span></div>
                         <div className="status-right">
                             <span>{currentFile?.extension?.toUpperCase()}</span>
-                            <span>Vektr Prism</span>
+                            <span>Vektr Prism v3</span>
                         </div>
                     </div>
                 </div>

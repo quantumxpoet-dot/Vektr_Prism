@@ -1,122 +1,259 @@
 {
-    "_comment": "Vektr Prism Provider Config — used by the clipboard bridge and onboarding wizard. Add any AI chatbot with a free web interface by adding an entry here.",
+    "_comment": "Vektr_IDE Provider Config — The 'generic' auto-detect works with ANY chat interface. Named providers below are optional optimizations with tuned selectors. Add any new AI chatbot by copying a block and changing the URL pattern.",
     "providers": [
         {
-            "_section": "=== FREE TIER AI CHATBOTS ==="
+            "id": "generic",
+            "name": "Auto-Detect (Any AI Chat)",
+            "category": "universal",
+            "urlPattern": "",
+            "inputSelector": "textarea, [contenteditable='true'], [role='textbox'], input[type='text'], .ql-editor, .ProseMirror, .cm-content",
+            "submitMethod": "enter",
+            "responseSelector": ".markdown, .prose, .message-content, .response, .answer, [class*='message'], [class*='response'], [class*='assistant'], [class*='bot'], article, [class*='output'], [class*='result']",
+            "waitMs": 8000,
+            "notes": "Works with ANY chat interface. VektrIDE finds the open tab, types your prompt, waits for a response. This is the default — you don't need named providers."
+        },
+        {
+            "_section": "=== MAJOR AI CHATBOTS ==="
         },
         {
             "id": "chatgpt",
             "name": "ChatGPT",
             "category": "chatbot",
-            "url": "https://chatgpt.com",
-            "freeTier": "GPT-4o, custom GPTs",
-            "icon": "🤖",
-            "color": "#10a37f"
+            "urlPattern": "chatgpt.com",
+            "inputSelector": "#prompt-textarea, [contenteditable='true']",
+            "submitMethod": "enter",
+            "responseSelector": ".markdown.prose, [data-message-author-role='assistant'] .markdown",
+            "waitMs": 6000,
+            "notes": "OpenAI ChatGPT. Works with free/Plus/Team. Supports custom GPTs and GPT-4o."
         },
         {
             "id": "claude",
-            "name": "Claude",
+            "name": "Claude (Anthropic)",
             "category": "chatbot",
-            "url": "https://claude.ai",
-            "freeTier": "Claude 3.5 Sonnet, Projects",
-            "icon": "✦",
-            "color": "#d4a276"
+            "urlPattern": "claude.ai",
+            "inputSelector": "[contenteditable='true'], .ProseMirror",
+            "submitMethod": "enter",
+            "responseSelector": ".font-claude-message .markdown, [data-is-streaming] .markdown",
+            "waitMs": 6000,
+            "notes": "Anthropic Claude. Works with free/Pro. Supports Projects and Artifacts."
         },
         {
             "id": "gemini",
-            "name": "Gemini",
+            "name": "Google Gemini",
             "category": "chatbot",
-            "url": "https://gemini.google.com",
-            "freeTier": "Gemini 1.5 Pro, Gems",
-            "icon": "✦",
-            "color": "#4285f4"
+            "urlPattern": "gemini.google.com",
+            "inputSelector": "[contenteditable='true'], [role='textbox'], .ql-editor, textarea",
+            "submitMethod": "enter",
+            "responseSelector": ".response-container model-response .markdown, .model-response-text, [class*='response']",
+            "waitMs": 5000,
+            "notes": "Google Gemini. Free tier available. Supports Gems and image understanding."
         },
         {
             "id": "grok",
-            "name": "Grok",
+            "name": "Grok (xAI)",
             "category": "chatbot",
-            "url": "https://grok.com",
-            "freeTier": "Grok 2, real-time web",
-            "icon": "𝕏",
-            "color": "#1a1a1a"
+            "urlPattern": "grok.com",
+            "inputSelector": "textarea, [contenteditable='true'], [role='textbox']",
+            "submitMethod": "enter",
+            "responseSelector": ".message-content, .prose, [class*='response'], [class*='message']",
+            "waitMs": 6000,
+            "notes": "xAI Grok. Available via X Premium or grok.com."
         },
         {
             "id": "copilot",
             "name": "Microsoft Copilot",
             "category": "chatbot",
-            "url": "https://copilot.microsoft.com",
-            "freeTier": "GPT-4 via Microsoft",
-            "icon": "🪟",
-            "color": "#0078d4"
+            "urlPattern": "copilot.microsoft.com",
+            "inputSelector": "textarea, [contenteditable='true'], #searchbox",
+            "submitMethod": "enter",
+            "responseSelector": ".ac-textBlock, [class*='response'], [class*='message'], .prose",
+            "waitMs": 7000,
+            "notes": "Microsoft Copilot (formerly Bing Chat). Free with Microsoft account."
+        },
+        {
+            "id": "meta",
+            "name": "Meta AI",
+            "category": "chatbot",
+            "urlPattern": "meta.ai",
+            "inputSelector": "textarea, [contenteditable='true'], [role='textbox']",
+            "submitMethod": "enter",
+            "responseSelector": "[class*='message'], [class*='response'], .prose, .markdown",
+            "waitMs": 6000,
+            "notes": "Meta AI powered by Llama. Free."
         },
         {
             "id": "deepseek",
             "name": "DeepSeek",
             "category": "chatbot",
-            "url": "https://chat.deepseek.com",
-            "freeTier": "R1, V3 — fully free",
-            "icon": "🐳",
-            "color": "#4d6bfe"
+            "urlPattern": "chat.deepseek.com",
+            "inputSelector": "textarea, [contenteditable='true']",
+            "submitMethod": "enter",
+            "responseSelector": ".markdown, .prose, [class*='message'], [class*='response']",
+            "waitMs": 7000,
+            "notes": "DeepSeek Chat. Free tier with R1 reasoning model."
         },
         {
-            "id": "meta-ai",
-            "name": "Meta AI",
+            "_section": "=== SPECIALIZED AI PLATFORMS ==="
+        },
+        {
+            "id": "mistral",
+            "name": "Mistral Le Chat",
             "category": "chatbot",
-            "url": "https://meta.ai",
-            "freeTier": "Llama 4 — fully free",
-            "icon": "🔵",
-            "color": "#0866ff"
+            "urlPattern": "chat.mistral.ai",
+            "inputSelector": "textarea, [contenteditable='true']",
+            "submitMethod": "enter",
+            "responseSelector": ".prose, .message-content, .markdown",
+            "waitMs": 5000,
+            "notes": "Mistral AI. Free tier available. Strong at code."
         },
         {
             "id": "perplexity",
             "name": "Perplexity",
-            "category": "chatbot",
-            "url": "https://perplexity.ai",
-            "freeTier": "AI search + reasoning",
-            "icon": "🔍",
-            "color": "#1fb8cd"
+            "category": "search",
+            "urlPattern": "perplexity.ai",
+            "inputSelector": "textarea, [contenteditable='true']",
+            "submitMethod": "enter",
+            "responseSelector": ".prose, .markdown-content, [class*='answer']",
+            "waitMs": 6000,
+            "notes": "Perplexity AI. Search + Answer engine. Great for research-backed code questions."
         },
         {
-            "_section": "=== AGENTIC ==="
+            "id": "phind",
+            "name": "Phind",
+            "category": "search",
+            "urlPattern": "phind.com",
+            "inputSelector": "textarea, [contenteditable='true']",
+            "submitMethod": "enter",
+            "responseSelector": ".markdown, .prose, [class*='answer'], [class*='response']",
+            "waitMs": 6000,
+            "notes": "Phind — dev-focused AI search. Strong at code with search context."
+        },
+        {
+            "id": "you",
+            "name": "You.com",
+            "category": "search",
+            "urlPattern": "you.com",
+            "inputSelector": "textarea, [contenteditable='true'], input[type='text']",
+            "submitMethod": "enter",
+            "responseSelector": ".markdown, [class*='answer'], [class*='response'], .prose",
+            "waitMs": 6000,
+            "notes": "You.com AI assistant with web search integration."
+        },
+        {
+            "_section": "=== AGENTIC / MULTI-STEP PLATFORMS ==="
         },
         {
             "id": "manus",
-            "name": "Manus",
+            "name": "Manus (Agentic AI)",
             "category": "agentic",
-            "url": "https://manus.im",
-            "freeTier": "Autonomous agentic AI",
-            "icon": "🤝",
-            "color": "#6c47ff"
+            "urlPattern": "manus.im",
+            "inputSelector": "textarea, [contenteditable='true'], [role='textbox']",
+            "submitMethod": "enter",
+            "responseSelector": "[class*='message'], [class*='response'], [class*='output'], .markdown, .prose",
+            "waitMs": 15000,
+            "notes": "Manus — fully agentic AI that can browse, code, and execute. Longer wait times because it performs multi-step tasks. Game changer when wired through Vektr_IDE."
         },
         {
-            "_section": "=== GOOGLE TOOLS ==="
+            "id": "aistudio",
+            "name": "Google AI Studio",
+            "category": "agentic",
+            "urlPattern": "aistudio.google.com",
+            "inputSelector": "textarea, [contenteditable='true'], [role='textbox'], .cm-content",
+            "submitMethod": "enter",
+            "responseSelector": "[class*='response'], [class*='output'], .markdown, .prose, [class*='model']",
+            "waitMs": 10000,
+            "notes": "Google AI Studio — direct Gemini model access with system prompts, structured output, and tuning. Free tier."
+        },
+        {
+            "id": "poe",
+            "name": "Poe (Multi-Model)",
+            "category": "aggregator",
+            "urlPattern": "poe.com",
+            "inputSelector": "textarea, [contenteditable='true']",
+            "submitMethod": "enter",
+            "responseSelector": ".markdown, [class*='message'], [class*='response'], .prose",
+            "waitMs": 7000,
+            "notes": "Poe by Quora — access GPT-4, Claude, Gemini, Llama, and custom bots from one interface."
+        },
+        {
+            "id": "vertex-ai",
+            "name": "Google Vertex AI Studio",
+            "category": "enterprise",
+            "urlPattern": "console.cloud.google.com/vertex-ai",
+            "inputSelector": "textarea, [contenteditable='true'], [role='textbox'], .cfc-textarea, input[type='text']",
+            "submitMethod": "enter",
+            "responseSelector": "[class*='response'], [class*='output'], [class*='model'], .markdown, pre, code",
+            "waitMs": 10000,
+            "notes": "Google Cloud Vertex AI Prompt & Chat Studio. Access Gemini Pro/Ultra, Codey — all enterprise Vertex models via the GCloud console using your existing session. No extra billing beyond your GCP project."
+        },
+        {
+            "id": "vertex-agent-builder",
+            "name": "Google Agent Builder (Vertex AI)",
+            "category": "agentic",
+            "urlPattern": "console.cloud.google.com/gen-app-builder",
+            "inputSelector": "textarea, [contenteditable='true'], [role='textbox'], input[type='text']",
+            "submitMethod": "enter",
+            "responseSelector": "[class*='response'], [class*='message'], [class*='output'], .markdown, [class*='chat']",
+            "waitMs": 12000,
+            "notes": "Google Agent Builder — build and test multi-turn agents with RAG, grounding, and tools. Pair with Vektr_IDE to drive a configured agent that has your codebase as a grounded data source."
+        },
+        {
+            "id": "agentspace",
+            "name": "Google Agentspace (Enterprise)",
+            "category": "agentic",
+            "urlPattern": "agentspace.google.com",
+            "inputSelector": "textarea, [contenteditable='true'], [role='textbox']",
+            "submitMethod": "enter",
+            "responseSelector": "[class*='response'], [class*='message'], [class*='answer'], .markdown, .prose",
+            "waitMs": 10000,
+            "notes": "Google Agentspace — enterprise AI assistant with grounding to Google Workspace, Drive, and third-party sources. Strong for document-grounded coding and architecture questions."
+        },
+        {
+            "id": "aws-bedrock",
+            "name": "AWS Bedrock Playground",
+            "category": "enterprise",
+            "urlPattern": "console.aws.amazon.com/bedrock",
+            "inputSelector": "textarea, [contenteditable='true'], [role='textbox'], input[type='text']",
+            "submitMethod": "enter",
+            "responseSelector": "[class*='response'], [class*='output'], [class*='message'], .markdown, pre",
+            "waitMs": 10000,
+            "notes": "AWS Bedrock Chat Playground — access Claude, Titan, Llama, Mistral, and Cohere models through the AWS console. Uses your existing AWS session."
+        },
+        {
+            "id": "azure-ai-foundry",
+            "name": "Azure AI Foundry (Chat Playground)",
+            "category": "enterprise",
+            "urlPattern": "ai.azure.com",
+            "inputSelector": "textarea, [contenteditable='true'], [role='textbox'], input[type='text']",
+            "submitMethod": "enter",
+            "responseSelector": "[class*='response'], [class*='message'], [class*='chat'], [class*='output'], .markdown",
+            "waitMs": 10000,
+            "notes": "Azure AI Foundry (formerly Azure OpenAI Studio) — GPT-4, o1, Phi, Mistral via the Azure portal chat playground using your Azure subscription session."
+        },
+        {
+            "_section": "=== DOCUMENT & KNOWLEDGE CHAT ==="
         },
         {
             "id": "notebooklm",
-            "name": "NotebookLM",
+            "name": "NotebookLM (Google)",
             "category": "document",
-            "url": "https://notebooklm.google.com",
-            "freeTier": "Codebase-grounded AI — free",
-            "icon": "📓",
-            "color": "#34a853"
+            "urlPattern": "notebooklm.google.com",
+            "inputSelector": "textarea, [contenteditable='true'], [role='textbox']",
+            "submitMethod": "enter",
+            "responseSelector": "[class*='response'], [class*='message'], [class*='chat'], .markdown",
+            "waitMs": 9000,
+            "notes": "Upload your codebase as .txt sources — NotebookLM builds deep semantic understanding. Free with Google account. Best for architecture, refactoring, documentation tasks."
         },
         {
-            "id": "gemini-studio",
-            "name": "Google AI Studio",
-            "category": "enterprise",
-            "url": "https://aistudio.google.com",
-            "freeTier": "Gemini API playground — free tier",
-            "icon": "🧪",
-            "color": "#4285f4"
-        },
-        {
-            "id": "vertex",
-            "name": "Vertex AI",
-            "category": "enterprise",
-            "url": "https://console.cloud.google.com",
-            "freeTier": "Enterprise Gemini — GCloud account",
-            "icon": "☁️",
-            "color": "#fbbc04"
+            "id": "chatpdf",
+            "name": "ChatPDF",
+            "category": "document",
+            "urlPattern": "chatpdf.com",
+            "inputSelector": "textarea, [contenteditable='true']",
+            "submitMethod": "enter",
+            "responseSelector": "[class*='message'], [class*='response'], .markdown, .prose",
+            "waitMs": 6000,
+            "notes": "ChatPDF — chat with PDF documents. Useful for spec sheets, API docs, design docs."
         }
     ]
 }

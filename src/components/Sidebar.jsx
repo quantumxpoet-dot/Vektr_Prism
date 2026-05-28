@@ -1,112 +1,99 @@
-import { useState, useCallback, useEffect } from 'react';
-import * as FS from '../lib/fileSystem.js';
+import { useState, useCallback } from 'react';
 
-const DONE_KEY = 'vektr_onboarding_done';
+const RECENT_KEY = 'vektr_recent_folders';
+const MAX_RECENT = 6;
 
-export default function Sidebar({ onFileSelect, onDirOpen }) {
-    const [root, setRoot] = useState(null); // { handle, name }
+const API = '/api';
+
+function getRecent() {
+    try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
+    catch { return []; }
+}
+function saveRecent(path) {
+    const list = [path, ...getRecent().filter(p => p !== path)].slice(0, MAX_RECENT);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+}
+
+export default function Sidebar({ currentDir, onDirChange, onFileSelect, activeFile }) {
     const [items, setItems] = useState([]);
-    const [loading, setLoading] = useState(false);
     const [expanded, setExpanded] = useState({});
     const [childItems, setChildItems] = useState({});
-    const [activeFile, setActiveFile] = useState(null);
-    const [recent, setRecent] = useState(() => {
-        try { return JSON.parse(localStorage.getItem('vektr_recent_names') || '[]'); }
-        catch { return []; }
-    });
-    const [error, setError] = useState(null);
+    const [pathInput, setPathInput] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [loaded, setLoaded] = useState(false);
+    const [recent, setRecent] = useState(getRecent);
 
-    // Try restoring the last-opened folder on mount
-    useEffect(() => {
-        (async () => {
-            if (!FS.isSupported()) return;
-            const restored = await FS.restoreFolder();
-            if (restored) {
-                await loadRoot(restored);
-            }
-        })();
+    const fetchDir = useCallback(async (dir) => {
+        try {
+            setLoading(true);
+            const res = await fetch(`${API}/files?dir=${encodeURIComponent(dir)}`);
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            return data.items || [];
+        } catch (e) {
+            console.error('Sidebar:', e);
+            return [];
+        } finally { setLoading(false); }
     }, []);
 
-    const loadRoot = useCallback(async ({ handle, name }) => {
-        setLoading(true);
-        setError(null);
-        setItems([]);
+    const openFolder = useCallback(async (dir) => {
+        const target = (dir || pathInput).trim();
+        if (!target) return;
+        onDirChange(target);
+        setPathInput(target);
+        const dirItems = await fetchDir(target);
+        setItems(dirItems);
         setExpanded({});
         setChildItems({});
+        setLoaded(true);
+        saveRecent(target);
+        setRecent(getRecent());
+    }, [pathInput, onDirChange, fetchDir]);
+
+    const toggleFolder = useCallback(async (folderPath) => {
+        if (expanded[folderPath]) {
+            setExpanded(prev => ({ ...prev, [folderPath]: false }));
+        } else {
+            if (!childItems[folderPath]) {
+                const children = await fetchDir(folderPath);
+                setChildItems(prev => ({ ...prev, [folderPath]: children }));
+            }
+            setExpanded(prev => ({ ...prev, [folderPath]: true }));
+        }
+    }, [expanded, childItems, fetchDir]);
+
+    // Native folder picker — uses Chrome's File System Access API
+    const browseFolderNative = useCallback(async () => {
         try {
-            const children = await FS.listDir(handle);
-            setRoot({ handle, name });
-            setItems(children);
-            onDirOpen?.(name);
-
-            // Save name to recent list
-            setRecent(prev => {
-                const next = [name, ...prev.filter(r => r !== name)].slice(0, 6);
-                localStorage.setItem('vektr_recent_names', JSON.stringify(next));
-                return next;
-            });
+            const handle = await window.showDirectoryPicker({ mode: 'read' });
+            // Build the path — the API gives us the folder name, not full path.
+            // We combine with a known root or ask server for the resolved path.
+            const folderName = handle.name;
+            // Ask server to resolve it from common locations
+            const res = await fetch(`${API}/resolve-folder?name=${encodeURIComponent(folderName)}`);
+            const data = await res.json();
+            const resolved = data.path || folderName;
+            await openFolder(resolved);
         } catch (e) {
-            setError('Could not read folder: ' + e.message);
-        } finally {
-            setLoading(false);
+            if (e.name !== 'AbortError') {
+                // Fallback: just focus the path input
+                document.querySelector('.path-input')?.focus();
+            }
         }
-    }, [onDirOpen]);
+    }, [openFolder]);
 
-    const openFolder = useCallback(async () => {
-        if (!FS.isSupported()) {
-            setError('File System Access API requires Chrome or Edge on desktop.');
-            return;
-        }
-        try {
-            const result = await FS.openFolder();
-            await loadRoot(result);
-        } catch (e) {
-            if (e.name !== 'AbortError') setError(e.message);
-        }
-    }, [loadRoot]);
-
-    const reconnect = useCallback(async () => {
-        const restored = await FS.restoreFolder();
-        if (restored) await loadRoot(restored);
-        else setError('Permission denied. Please re-open the folder.');
-    }, [loadRoot]);
-
-    const toggleFolder = useCallback(async (item) => {
-        const key = item.path;
-        if (expanded[key]) {
-            setExpanded(prev => ({ ...prev, [key]: false }));
-            return;
-        }
-        setExpanded(prev => ({ ...prev, [key]: true }));
-        if (!childItems[key]) {
-            try {
-                const children = await FS.listDir(item.handle, item.path);
-                setChildItems(prev => ({ ...prev, [key]: children }));
-            } catch { /* unreadable dir */ }
-        }
-    }, [expanded, childItems]);
-
-    const selectFile = useCallback(async (item) => {
-        setActiveFile(item.path);
-        try {
-            const fileData = await FS.readFile(item.handle);
-            onFileSelect?.({ ...fileData, path: item.path, handle: item.handle });
-        } catch (e) {
-            setError('Could not read file: ' + e.message);
-        }
-    }, [onFileSelect]);
+    const handleKey = (e) => { if (e.key === 'Enter') openFolder(); };
 
     const renderItem = (item, depth = 0) => {
         const isDir = item.type === 'directory';
         const isActive = item.path === activeFile;
         const isOpen = expanded[item.path];
-
         return (
             <div key={item.path} className="tree-group">
                 <div
                     className={`tree-item ${isActive ? 'active' : ''}`}
                     style={{ paddingLeft: `${14 + depth * 14}px` }}
-                    onClick={() => isDir ? toggleFolder(item) : selectFile(item)}
+                    onClick={() => isDir ? toggleFolder(item.path) : onFileSelect(item.path)}
                 >
                     <span className="icon">{isDir ? (isOpen ? '📂' : '📁') : getFileIcon(item.name)}</span>
                     <span className="name">{item.name}</span>
@@ -126,63 +113,77 @@ export default function Sidebar({ onFileSelect, onDirOpen }) {
             <div className="sidebar-header">
                 <div className="sidebar-section-label">Explorer</div>
 
-                {!root ? (
-                    <>
-                        <button className="open-folder-btn" onClick={openFolder}>
-                            📂 Open Folder
-                        </button>
-                        {error && <div className="sidebar-error">{error}</div>}
+                {/* Primary action: native folder browse button */}
+                <button
+                    className="open-folder-btn"
+                    onClick={browseFolderNative}
+                    title="Open a project folder"
+                >
+                    📂 Open Folder
+                </button>
+
+                {/* Fallback: manual path entry */}
+                <div className="path-input-group">
+                    <input
+                        className="path-input"
+                        type="text"
+                        value={pathInput}
+                        onChange={e => setPathInput(e.target.value)}
+                        onKeyDown={handleKey}
+                        placeholder="or paste a path…"
+                    />
+                    <button className="path-go-btn" onClick={() => openFolder()} title="Open folder">
+                        {loading ? '…' : '→'}
+                    </button>
+                </div>
+            </div>
+
+
+            <div className="sidebar-tree">
+                {!loaded && !loading && (
+                    <div className="sidebar-empty">
+                        <div className="sidebar-empty-icon">📁</div>
+                        <div className="sidebar-empty-title">No folder open</div>
+                        <div className="sidebar-empty-sub">Enter a project path above and press Enter</div>
                         {recent.length > 0 && (
                             <div className="recent-folders">
                                 <div className="recent-label">Recent</div>
-                                {recent.map(name => (
+                                {recent.map(r => (
                                     <button
-                                        key={name}
+                                        key={r}
                                         className="recent-item"
-                                        onClick={openFolder}
-                                        title={`Reopen ${name}`}
+                                        onClick={() => openFolder(r)}
+                                        title={r}
                                     >
-                                        📁 {name}
+                                        📁 {r.split('\\').filter(Boolean).pop() || r}
+                                        <span className="recent-path">{r}</span>
                                     </button>
                                 ))}
                             </div>
                         )}
-                    </>
-                ) : (
-                    <div className="sidebar-root-row">
-                        <span className="sidebar-root-name" title={root.name}>📁 {root.name}</span>
-                        <button className="change-folder-btn" onClick={openFolder} title="Open different folder">⇄</button>
                     </div>
                 )}
-            </div>
-
-            <div className="sidebar-tree">
-                {loading && <div className="sidebar-loading">Loading…</div>}
-                {error && root && (
-                    <div className="sidebar-error">
-                        {error}
-                        <button onClick={reconnect} className="reconnect-btn">Re-connect</button>
-                    </div>
-                )}
-                {root && !loading && items.length === 0 && (
+                {loaded && items.length === 0 && !loading && (
                     <div className="sidebar-empty">
                         <div className="sidebar-empty-icon">🔍</div>
                         <div className="sidebar-empty-sub">No files found</div>
                     </div>
                 )}
-                {!root && !loading && (
-                    <div className="sidebar-empty">
-                        <div className="sidebar-empty-icon">📁</div>
-                        <div className="sidebar-empty-title">No folder open</div>
-                        <div className="sidebar-empty-sub">Click Open Folder to get started</div>
-                    </div>
-                )}
                 {items.map(item => renderItem(item))}
             </div>
 
-            {root && (
+            {loaded && (
                 <div className="sidebar-footer">
-                    <span className="sidebar-cwd" title={root.name}>📁 {root.name}</span>
+                    <span className="sidebar-cwd" title={currentDir}>
+                        📁 {currentDir.split('\\').filter(Boolean).pop() || currentDir}
+                    </span>
+                    <button
+                        className="change-folder-btn"
+                        onClick={() => { setLoaded(false); setItems([]); setPathInput(''); }}
+                        title="Change folder"
+                    >
+                        ⇄
+                    </button>
                 </div>
             )}
         </div>

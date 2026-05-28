@@ -1,89 +1,67 @@
-# Vektr Prism — FAQ
-
-## General
-
-**What is Vektr Prism?**
-A free agentic IDE you use in your browser at vektrprism.site. It connects your code editor to any AI chatbot you already use — ChatGPT, Claude, Gemini, etc. — without API keys.
-
-**Is it really free?**
-Yes. Vektr Prism is free. The AI chatbots it works with all have free tiers (ChatGPT, Claude, Gemini, DeepSeek, etc.). You don't pay for Vektr Prism, and you don't need a paid AI subscription.
-
-**Does it work without installing anything?**
-Yes. Just open vektrprism.site in Chrome or Edge. No downloads, no Node.js, no app to install.
-
-**Do I need an API key?**
-No. Vektr Prism uses your existing browser sessions — the same accounts you already log into on chatgpt.com, claude.ai, etc.
+# VektrIDE — Frequently Asked Questions
 
 ---
 
-## Privacy & Security
+### Do I need an API key?
+**No.** VektrIDE uses your existing browser sessions. If you're logged into ChatGPT, Claude, or Gemini in Chrome, that's all you need. No keys, no tokens, no billing.
 
-**Does my code get sent to Vektr Prism servers?**
-No. Vektr Prism has no server. It's a static website. Your files are read directly by your browser using the File System Access API — they never leave your machine.
+### Does it work with [insert AI chatbot]?
+If it has a text input and a response area in a browser, **yes**. Edit `providers.json` to add the CSS selectors. No code changes, no restart.
 
-**Who sees my AI conversations?**
-Only you and the AI provider you're using. Vektr Prism doesn't intercept, log, or relay any messages.
+### Is my code sent to the internet?
+Only to the AI chatbot you choose, through your own browser tab. VektrIDE itself runs 100% locally — no telemetry, no cloud, no external servers.
 
-**Is my API key stored anywhere?**
-There are no API keys required. If you optionally add one for direct API mode, it's stored only in your browser's IndexedDB — never sent to any server.
+### Can I use my normal Chrome profile?
+The `--user-data-dir` flag creates a separate profile to avoid conflicts. You *can* use your main profile, but if Chrome is already open, the debug port may conflict. Safest to use a separate profile.
 
----
+### Why does it need Playwright? That's 50MB.
+Playwright is the library that lets Node.js control Chrome tabs. It's the engine behind the entire AI bridge. Without it, there's no way to type into ChatGPT or read Claude's responses programmatically. It's the one dependency that can't be removed.
 
-## How It Works
+### Can I run VektrIDE and my normal Chrome at the same time?
+**Yes**, as long as your normal Chrome wasn't launched with `--remote-debugging-port`. The debug Chrome is a separate instance with its own profile.
 
-**How does Vektr Prism talk to AI without an API key?**
-Through your clipboard. When you ask a question, the prompt is automatically copied to your clipboard and your AI tab opens. You paste it, get the response, copy it, and click "Paste Response" in Vektr Prism. The AI response is now in your IDE.
+### What happens if the AI chatbot changes its website layout?
+The selectors in `providers.json` may break. When that happens:
+1. Open the chatbot in Chrome
+2. Press `F12` to open DevTools
+3. Find the new CSS selectors for the input box and response area
+4. Update `providers.json`
+5. No restart needed
 
-**How does it read and write my files?**
-Using the browser's File System Access API — a native Chrome/Edge feature that lets websites read and write local files with your explicit permission. You click "Allow" once, and Chrome remembers it.
+### Can I edit files outside the project I'm browsing?
+**Yes.** The file API accepts any Windows path. Type any folder path in the sidebar. There are no sandboxing restrictions — this is a local tool for local files.
 
-**Do I need to keep Node.js running?**
-No. There's no local server. Everything runs inside your browser tab.
+### What's the difference between Manual and Agent mode?
+- **Manual**: You write the prompt, you review the response, you click Confirm. One file at a time.
+- **Agent**: You describe a goal, the AI plans multiple steps, executes them across multiple files, runs tests, and fixes errors automatically.
 
-**What happens if I close and reopen the browser?**
-Your folder and settings are remembered. Chrome may ask you to re-confirm folder access (one click to restore).
+### Is Agent mode safe? Will it break my code?
+In **Supervised mode** (the default), the agent pauses after every step and waits for your approval. Nothing is written to disk until you click Approve. In **Autonomous mode**, it runs freely — use with caution, or on a Git branch.
 
----
+### Can I undo changes the agent made?
+VektrIDE doesn't have built-in undo. Use Git:
+```powershell
+cd C:\your\project
+git diff          # see what changed
+git checkout .    # undo everything
+```
 
-## Features
+### Does VektrIDE run in the background?
+No. It runs as long as the terminal window is open. Close the window = VektrIDE stops. There's no system tray icon or background service.
 
-**Can I use multiple AI chatbots?**
-Yes. Switch providers anytime with the dropdown in the Chat panel. You can have ChatGPT, Claude, and Gemini tabs open simultaneously and pick the right one per task.
+### Can I use VektrIDE on Mac or Linux?
+The code is cross-platform Node.js, but the batch files (`.bat`) are Windows-only. On Mac/Linux, replace `launch.bat` with `node server.js` and adjust the Chrome command for your OS.
 
-**What's Agent Mode?**
-Agent Mode breaks a big goal (e.g. "Add authentication") into a numbered step plan, then walks through each step with targeted prompts — one file at a time. You paste the AI's response after each step.
+### How do I update VektrIDE?
+Pull the latest code (if using Git), then:
+```powershell
+npm install
+npm run build
+```
+Or just double-click `install.bat` again.
 
-**Can I use custom GPTs or Claude Projects?**
-Yes. Since you're using the actual chatbot interfaces, any features they offer are available — custom GPTs, Claude Projects, Gemini Gems, memory, etc.
+### Can multiple people use VektrIDE at the same time?
+Not by design. It binds to `localhost` and controls one Chrome instance. It's a single-user local tool.
 
-**Does it work with private/local AI models?**
-If the model has a browser chat interface (e.g. a locally running Open WebUI), Vektr Prism can open that URL. However, local-only setups are out of scope for vektrprism.site.
-
----
-
-## Compatibility
-
-**What browsers are supported?**
-Chrome 86+ and Edge 86+ are fully supported. Firefox and Safari don't support the File System Access API and won't work with file reading/writing.
-
-**Does it work on mobile?**
-Vektr Prism is designed for desktop use. It's accessible on mobile Chrome but the layout is optimized for laptop/desktop screens.
-
-**Does it work on Mac / Linux?**
-Yes. It's a website — any platform running Chrome or Edge works.
-
----
-
-## Troubleshooting
-
-**The folder picker doesn't open.**
-You need Chrome or Edge 86+. Make sure you're not using Firefox or Safari.
-
-**My files disappeared after restarting Chrome.**
-Click "Re-connect" in the Explorer panel. Chrome revokes folder access on browser close for security — one click restores it.
-
-**Popups are being blocked.**
-Allow popups from vektrprism.site: Chrome → Settings → Privacy → Site Settings → Pop-ups → Allow vektrprism.site.
-
-**Clipboard paste isn't reading the AI's response.**
-Make sure you copied the text from your AI tab before clicking "Paste Response." The button reads whatever is currently in your clipboard.
+### Where are the logs?
+The agent logs appear live in the Agent Panel UI. Server logs print to the terminal window running `node server.js`. There are no log files written to disk.

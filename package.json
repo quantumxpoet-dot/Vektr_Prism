@@ -3,20 +3,82 @@
     "private": true,
     "version": "3.0.0",
     "type": "module",
+    "main": "electron/main.cjs",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "preview": "vite preview"
+        "start": "node server.js",
+        "preview": "vite preview",
+        "server": "node server.js",
+        "package": "npm run build && npx pkg . --targets node18-win-x64 --output dist-exe/VektrPrism.exe --compress GZip",
+        "electron:dev": "NODE_ENV=development electron .",
+        "electron:build": "npm run build && electron-builder",
+        "electron:build:win": "npm run build && electron-builder --win",
+        "electron:build:mac": "npm run build && electron-builder --mac",
+        "electron:build:linux": "npm run build && electron-builder --linux"
+    },
+    "pkg": {
+        "scripts": "server.js",
+        "assets": [
+            "dist/**/*",
+            "providers.json",
+            "agent/**/*"
+        ],
+        "targets": [
+            "node18-win-x64"
+        ]
     },
     "dependencies": {
         "@monaco-editor/react": "^4.7.0",
+        "cors": "^2.8.5",
+        "express": "^4.21.0",
+        "playwright": "^1.52.0",
         "react": "^19.1.0",
-        "react-dom": "^19.1.0"
+        "react-dom": "^19.1.0",
+        "ws": "^8.18.0"
     },
     "devDependencies": {
         "@types/react": "^19.1.0",
         "@types/react-dom": "^19.1.0",
         "@vitejs/plugin-react": "^4.4.0",
-        "vite": "^6.3.0"
+        "vite": "^6.3.0",
+        "electron": "^33.0.0",
+        "electron-builder": "^25.0.0"
+    },
+    "build": {
+        "appId": "com.vektrprism.app",
+        "productName": "Vektr Prism",
+        "directories": {
+            "output": "dist-electron"
+        },
+        "files": [
+            "dist/**/*",
+            "electron/**/*",
+            "server.js",
+            "providers.json",
+            "agent/**/*",
+            "ide-backend.js",
+            "package.json"
+        ],
+        "win": {
+            "target": ["nsis", "portable"],
+            "icon": "assets/icon.png"
+        },
+        "mac": {
+            "target": ["dmg", "zip"],
+            "icon": "assets/icon.icns",
+            "category": "public.app-category.developer-tools"
+        },
+        "linux": {
+            "target": ["AppImage", "deb"],
+            "icon": "assets/icon.png",
+            "category": "Development"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true
+        }
     }
 }

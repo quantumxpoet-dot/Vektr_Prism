@@ -1,10 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import * as AI from '../lib/aiBridge.js';
-import providersData from '../../providers.json';
 
-const STATIC_PROVIDERS = (providersData.providers || [])
-    .filter(p => p.id && !p._section)
-    .map(p => ({ id: p.id, name: p.name }));
+const API = '/api';
+
+const STATE_LABELS = {
+    idle: '⚪ Idle',
+    planning: '🧠 Planning...',
+    executing: '⚡ Executing...',
+    verifying: '🧪 Verifying...',
+    iterating: '🔄 Iterating...',
+    waiting: '⏸️ Waiting for approval',
+    complete: '✅ Complete',
+    failed: '❌ Failed',
+    aborted: '🛑 Aborted',
+};
 
 const TASK_TEMPLATES = [
     { label: '🔐 Add auth', value: 'Add JWT authentication with login and register routes' },
@@ -15,175 +23,194 @@ const TASK_TEMPLATES = [
     { label: '⚡ Optimize', value: 'Optimize performance: remove redundant code, add caching where appropriate' },
 ];
 
-// Multi-step agent runs in the browser using clipboard bridge.
-// Each step: build prompt → copy to clipboard → open AI tab → user pastes response → agent applies changes.
-
-const STEP_PROMPTS = {
-    plan: (goal, context) =>
-        `You are a senior software engineer acting as an agentic coding assistant.
-
-Project context:
-${context || '(no files loaded)'}
-
-Goal: ${goal}
-
-First, create a numbered step-by-step PLAN to accomplish this goal. For each step include:
-1. What file to modify or create
-2. What change to make
-3. Why this change is needed
-
-Output ONLY a JSON array like:
-[{"step": 1, "file": "src/auth.js", "action": "Create JWT middleware", "why": "Handles token validation"}]`,
-
-    execute: (step, goal) =>
-        `You are implementing step ${step.step} of a coding task.
-
-Goal: ${goal}
-Current step: ${step.action}
-File: ${step.file}
-
-Write the COMPLETE file content for ${step.file}. Output ONLY the raw code, no explanations, no markdown fences.`,
-};
-
-export default function AgentPanel({ currentDir, rootHandle }) {
+export default function AgentPanel({ currentDir }) {
     const [goal, setGoal] = useState('');
-    const [selectedProvider, setSelectedProvider] = useState(
-        () => localStorage.getItem('vektr_last_provider') || 'chatgpt'
-    );
-    const [agentState, setAgentState] = useState('idle'); // idle | planning | awaiting_plan | executing | awaiting_step | complete | aborted
+    const [mode, setMode] = useState('supervised');
+    const [agentState, setAgentState] = useState('idle');
     const [plan, setPlan] = useState([]);
     const [currentStep, setCurrentStep] = useState(-1);
+    const [totalSteps, setTotalSteps] = useState(0);
     const [logs, setLogs] = useState([]);
-    const [pendingPaste, setPendingPaste] = useState(null); // { type: 'plan'|'step', stepIdx? }
+    const [isStarting, setIsStarting] = useState(false);
+
+    // v4: tab auto-detection
+    const [openTabs, setOpenTabs] = useState([]);
+    const [selectedTab, setSelectedTab] = useState(null);
+    const [tabsLoading, setTabsLoading] = useState(false);
+    const [chromeConnected, setChromeConnected] = useState(false);
+
+    // v4: git + notebooklm
+    const [gitStatus, setGitStatus] = useState('');
+    const [nlmStatus, setNlmStatus] = useState('');
+    const [nlmExporting, setNlmExporting] = useState(false);
+
+    // Session memory — restore last goal and mode
+    useEffect(() => {
+        const saved = localStorage.getItem('vektride_session');
+        if (saved) {
+            try {
+                const s = JSON.parse(saved);
+                if (s.goal) setGoal(s.goal);
+                if (s.mode) setMode(s.mode);
+            } catch { }
+        }
+    }, []);
+
+    // Save session on changes
+    useEffect(() => {
+        localStorage.setItem('vektride_session', JSON.stringify({ goal, mode, dir: currentDir }));
+    }, [goal, mode, currentDir]);
 
     const logEndRef = useRef(null);
+    const eventSourceRef = useRef(null);
 
     useEffect(() => {
         logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [logs]);
 
-    // Restore session
+    // SSE connection for live updates
     useEffect(() => {
-        const saved = localStorage.getItem('vektr_agent_session');
-        if (saved) {
-            try {
-                const s = JSON.parse(saved);
-                if (s.goal) setGoal(s.goal);
-            } catch { }
-        }
+        const es = new EventSource(`${API}/agent/stream`);
+        eventSourceRef.current = es;
+        es.addEventListener('log', (e) => {
+            const entry = JSON.parse(e.data);
+            setLogs(prev => [...prev.slice(-200), entry]);
+        });
+        es.addEventListener('state', (e) => {
+            const data = JSON.parse(e.data);
+            setAgentState(data.state);
+            setCurrentStep(data.step);
+            setTotalSteps(data.total);
+        });
+        es.addEventListener('plan', (e) => {
+            const data = JSON.parse(e.data);
+            setPlan(data.plan || []);
+        });
+        es.addEventListener('complete', () => setAgentState('complete'));
+        return () => es.close();
     }, []);
 
-    useEffect(() => {
-        localStorage.setItem('vektr_agent_session', JSON.stringify({ goal }));
-    }, [goal]);
-
-    const log = useCallback((type, message) => {
-        setLogs(prev => [...prev.slice(-200), {
-            type,
-            message,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        }]);
-    }, []);
-
-    // Step 1: Generate plan via clipboard
-    const startPlanning = useCallback(async () => {
-        if (!goal.trim()) return;
-        setAgentState('planning');
-        setLogs([]);
-        setPlan([]);
-        setCurrentStep(-1);
-
-        const prompt = STEP_PROMPTS.plan(goal, currentDir ? `Project: ${currentDir}` : '');
-        await AI.clipboardAsk(prompt, selectedProvider);
-        log('info', 'Planning prompt copied to clipboard. Paste it into your AI tab, then copy the JSON plan response.');
-        setAgentState('awaiting_plan');
-        setPendingPaste({ type: 'plan' });
-    }, [goal, selectedProvider, currentDir, log]);
-
-    // Paste plan response from clipboard
-    const pastePlanResponse = useCallback(async () => {
-        const text = await AI.readClipboardResponse();
-        if (!text?.trim()) {
-            log('error', 'Clipboard is empty. Copy the AI response first.');
-            return;
-        }
-
-        // Try to extract JSON array from the response
+    // v4: detect open AI tabs
+    const detectTabs = useCallback(async () => {
+        setTabsLoading(true);
         try {
-            const match = text.match(/\[[\s\S]*\]/);
-            if (!match) throw new Error('No JSON array found in response');
-            const parsed = JSON.parse(match[0]);
-            if (!Array.isArray(parsed)) throw new Error('Expected an array');
-            setPlan(parsed);
-            log('success', `Plan received: ${parsed.length} steps`);
-            parsed.forEach((s, i) => log('plan', `Step ${i + 1}: ${s.action} → ${s.file}`));
-            setAgentState('ready');
-            setPendingPaste(null);
+            const res = await fetch(`${API}/tabs`);
+            const data = await res.json();
+            setChromeConnected(data.connected);
+            setOpenTabs(data.tabs || []);
+            if (data.tabs?.length > 0 && !selectedTab) {
+                // Auto-select first AI tab
+                const aiTab = data.tabs.find(t => t.isAI) || data.tabs[0];
+                setSelectedTab(aiTab.providerId);
+            }
+        } finally {
+            setTabsLoading(false);
+        }
+    }, [selectedTab]);
+
+    // Auto-detect tabs on mount
+    useEffect(() => { detectTabs(); }, []);
+
+    // v4: git snapshot
+    const takeGitSnapshot = async () => {
+        if (!currentDir) return;
+        setGitStatus('Snapshotting...');
+        try {
+            const res = await fetch(`${API}/git/snapshot`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ projectDir: currentDir }),
+            });
+            const data = await res.json();
+            setGitStatus(data.message);
+            setTimeout(() => setGitStatus(''), 4000);
         } catch (e) {
-            log('error', 'Could not parse plan: ' + e.message + '. Make sure AI returned a JSON array.');
+            setGitStatus('Git error: ' + e.message);
         }
-    }, [log]);
+    };
 
-    // Execute next step
-    const executeNextStep = useCallback(async () => {
-        const nextIdx = currentStep + 1;
-        if (nextIdx >= plan.length) {
-            setAgentState('complete');
-            log('success', '✅ All steps complete!');
-            return;
+    // One-click NotebookLM pipeline (export → open → create notebook → upload)
+    const pushToNotebookLM = async () => {
+        if (!currentDir) return;
+        setNlmExporting(true);
+        setNlmStatus('Starting...');
+        try {
+            const res = await fetch(`${API}/notebooklm-push`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dir: currentDir }),
+            });
+
+            // Stream NDJSON progress lines
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // keep incomplete line
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    try {
+                        const evt = JSON.parse(line);
+                        if (evt.error) {
+                            setNlmStatus('❌ ' + evt.error);
+                            setTimeout(() => setNlmStatus(''), 8000);
+                            return;
+                        }
+                        setNlmStatus(`${evt.step}/${evt.total} ${evt.message}`);
+                        if (evt.done) setTimeout(() => setNlmStatus(''), 8000);
+                    } catch { /* ignore parse errors */ }
+                }
+            }
+        } catch (e) {
+            setNlmStatus('❌ ' + e.message);
+            setTimeout(() => setNlmStatus(''), 8000);
+        } finally {
+            setNlmExporting(false);
         }
+    };
 
-        const step = plan[nextIdx];
-        setCurrentStep(nextIdx);
-        setAgentState('executing');
 
-        const prompt = STEP_PROMPTS.execute(step, goal);
-        await AI.clipboardAsk(prompt, selectedProvider);
-        log('info', `Step ${nextIdx + 1}/${plan.length}: "${step.action}" — prompt copied. Paste into AI, copy response, then click Paste Code.`);
-        setAgentState('awaiting_step');
-        setPendingPaste({ type: 'step', stepIdx: nextIdx });
-    }, [currentStep, plan, goal, selectedProvider, log]);
-
-    // Paste step code response
-    const pasteStepResponse = useCallback(async () => {
-        const code = await AI.readClipboardResponse();
-        if (!code?.trim()) {
-            log('error', 'Clipboard is empty. Copy the AI code response first.');
-            return;
-        }
-
-        const step = plan[currentStep];
-        log('code', `Received code for ${step.file} (${code.length} chars)`);
-
-        // Note: In full implementation, this writes the code to the file via fileSystem.js
-        // For now, we display it and mark step done
-        log('success', `Step ${currentStep + 1} complete — apply code to ${step.file} in your editor.`);
-        setPendingPaste(null);
-
-        if (currentStep + 1 >= plan.length) {
-            setAgentState('complete');
-            log('success', '🎉 Agent task complete!');
-        } else {
-            setAgentState('ready');
-        }
-    }, [currentStep, plan, log]);
-
-    const abort = useCallback(() => {
-        setAgentState('aborted');
-        setPendingPaste(null);
-        log('warn', 'Agent aborted.');
-    }, [log]);
-
-    const reset = useCallback(() => {
-        setAgentState('idle');
+    const startAgent = useCallback(async () => {
+        if (!goal.trim() || !currentDir) return;
+        setIsStarting(true);
+        setLogs([]);
         setPlan([]);
         setCurrentStep(-1);
-        setLogs([]);
-        setPendingPaste(null);
-    }, []);
+        try {
+            const res = await fetch(`${API}/agent/start`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    goal,
+                    projectDir: currentDir,
+                    mode,
+                    provider: selectedTab || 'generic',
+                }),
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+        } catch (e) {
+            setLogs(prev => [...prev, { timestamp: new Date().toISOString(), type: 'error', message: e.message }]);
+        } finally {
+            setIsStarting(false);
+        }
+    }, [goal, currentDir, mode, selectedTab]);
 
-    const isIdle = ['idle', 'complete', 'aborted'].includes(agentState);
-    const progress = plan.length > 0 ? ((currentStep + 1) / plan.length) * 100 : 0;
+    const approve = async () => { await fetch(`${API}/agent/approve`, { method: 'POST' }); };
+    const skip = async () => { await fetch(`${API}/agent/skip`, { method: 'POST' }); };
+    const abort = async () => {
+        await fetch(`${API}/agent/abort`, { method: 'POST' });
+        setAgentState('aborted');
+    };
+
+    const isRunning = ['planning', 'executing', 'verifying', 'iterating'].includes(agentState);
+    const isWaiting = agentState === 'waiting';
+    const isIdle = ['idle', 'complete', 'failed', 'aborted'].includes(agentState);
 
     return (
         <div className="agent-panel">
@@ -193,47 +220,83 @@ export default function AgentPanel({ currentDir, rootHandle }) {
                     <span className="agent-icon">🤖</span>
                     <span>Agent Mode</span>
                     <span className="agent-state-badge" data-state={agentState}>
-                        {{
-                            idle: '⚪ Idle',
-                            planning: '🧠 Planning...',
-                            awaiting_plan: '⏳ Waiting for plan',
-                            ready: '✅ Plan ready',
-                            executing: '⚡ Executing...',
-                            awaiting_step: '⏳ Waiting for code',
-                            complete: '✅ Complete',
-                            aborted: '🛑 Aborted',
-                        }[agentState] || agentState}
+                        {STATE_LABELS[agentState] || agentState}
                     </span>
                 </div>
-                {plan.length > 0 && (
-                    <div className="agent-progress-row">
-                        <div className="agent-progress-bar-outer">
-                            <div className="agent-progress-bar-inner" style={{ width: `${progress}%` }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {(isRunning || isWaiting) && (
+                        <div className="agent-progress">
+                            Step {Math.max(0, currentStep + 1)} / {totalSteps}
                         </div>
-                        <span className="agent-progress-label">
-                            {Math.max(0, currentStep + 1)} / {plan.length}
-                        </span>
+                    )}
+                    {/* v4: Chrome connection indicator */}
+                    <div
+                        className={`chrome-status ${chromeConnected ? 'connected' : 'disconnected'}`}
+                        onClick={detectTabs}
+                        title={chromeConnected ? 'Chrome connected — click to refresh tabs' : 'Chrome not connected — click to retry'}
+                    >
+                        {tabsLoading ? '⟳' : chromeConnected ? '🟢' : '🔴'} Chrome
                     </div>
-                )}
+                </div>
             </div>
 
-            {/* Provider selector */}
-            <div className="agent-provider-row">
-                <span className="agent-label">AI Provider</span>
-                <select
-                    className="chat-provider-select"
-                    value={selectedProvider}
-                    onChange={e => { setSelectedProvider(e.target.value); localStorage.setItem('vektr_last_provider', e.target.value); }}
-                >
-                    {STATIC_PROVIDERS.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                </select>
+            {/* v4: Tab Picker + Toolbox */}
+            <div className="agent-toolbox">
+                {/* AI Tab selector */}
+                <div className="tab-picker">
+                    {openTabs.length > 0 ? (
+                        <select
+                            className="tab-select"
+                            value={selectedTab || ''}
+                            onChange={e => setSelectedTab(e.target.value)}
+                        >
+                            {openTabs.map((tab, i) => (
+                                <option key={i} value={tab.providerId}>
+                                    {tab.isAI ? '✓ ' : ''}{tab.title}
+                                </option>
+                            ))}
+                        </select>
+                    ) : (
+                        <span className="tab-hint">
+                            {chromeConnected ? 'No tabs found — open a chatbot' : 'Open Chrome with CDP to connect'}
+                        </span>
+                    )}
+                    <button className="refresh-tabs-btn" onClick={detectTabs} title="Refresh tabs">⟳</button>
+                </div>
+
+                {/* Git snapshot + NotebookLM export */}
+                <div className="toolbox-actions">
+                    <button
+                        className="git-snapshot-btn"
+                        onClick={takeGitSnapshot}
+                        disabled={!currentDir}
+                        title="Commit current state before agent runs (safety net)"
+                    >
+                        📸 Git Snapshot
+                    </button>
+                    <button
+                        className="nlm-export-btn"
+                        onClick={pushToNotebookLM}
+                        disabled={!currentDir || nlmExporting}
+                        title="One-click: export project → open NotebookLM → create notebook → upload all files"
+                    >
+                        {nlmExporting ? '⏳ Uploading...' : '📓 → NotebookLM'}
+                    </button>
+                </div>
             </div>
+
+            {/* Status messages */}
+            {(gitStatus || nlmStatus) && (
+                <div className="toolbox-status">
+                    {gitStatus && <span className="status-msg git-msg">📸 {gitStatus}</span>}
+                    {nlmStatus && <span className="status-msg nlm-msg">📓 {nlmStatus}</span>}
+                </div>
+            )}
 
             {/* Goal Input */}
             {isIdle && (
                 <div className="agent-goal-section">
+                    {/* Task templates */}
                     <div className="template-bar">
                         {TASK_TEMPLATES.map((t, i) => (
                             <button
@@ -250,91 +313,68 @@ export default function AgentPanel({ currentDir, rootHandle }) {
                         className="agent-goal-input"
                         placeholder='Describe what you want built... (e.g. "Add JWT authentication with login/register routes")'
                         value={goal}
-                        onChange={e => setGoal(e.target.value)}
+                        onChange={(e) => setGoal(e.target.value)}
                         rows={3}
                     />
-                    <button
-                        className="agent-start-btn"
-                        onClick={startPlanning}
-                        disabled={!goal.trim()}
-                    >
-                        ▶ Start Agent
-                    </button>
+                    <div className="agent-controls">
+                        <div className="agent-mode-toggle">
+                            <label className={`mode-option ${mode === 'supervised' ? 'active' : ''}`}>
+                                <input type="radio" name="mode" value="supervised"
+                                    checked={mode === 'supervised'} onChange={() => setMode('supervised')} />
+                                ⏸️ Supervised
+                            </label>
+                            <label className={`mode-option ${mode === 'autonomous' ? 'active' : ''}`}>
+                                <input type="radio" name="mode" value="autonomous"
+                                    checked={mode === 'autonomous'} onChange={() => setMode('autonomous')} />
+                                🚀 Autonomous
+                            </label>
+                        </div>
+                        <button
+                            className="agent-start-btn"
+                            onClick={startAgent}
+                            disabled={!goal.trim() || isStarting || !currentDir}
+                        >
+                            {isStarting ? '⏳ Starting...' : '▶ Start Agent'}
+                        </button>
+                    </div>
                 </div>
             )}
 
-            {/* Clipboard action banner */}
-            {pendingPaste && (
-                <div className="paste-response-banner">
-                    {pendingPaste.type === 'plan' ? (
-                        <>
-                            <span>📋 Planning prompt copied! Paste into your AI tab, get the step-by-step plan, copy it, then:</span>
-                            <button className="paste-response-btn" onClick={pastePlanResponse}>
-                                📥 Paste Plan
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <span>📋 Code prompt copied for <strong>{plan[currentStep]?.file}</strong>. Paste into AI, copy the code response, then:</span>
-                            <button className="paste-response-btn" onClick={pasteStepResponse}>
-                                📥 Paste Code
-                            </button>
-                        </>
-                    )}
-                </div>
-            )}
-
-            {/* Plan steps */}
+            {/* Plan Steps */}
             {plan.length > 0 && (
                 <div className="agent-plan">
-                    <div className="plan-title">📋 Plan — {plan.length} steps</div>
+                    <div className="plan-title">📋 Plan</div>
                     {plan.map((step, i) => (
                         <div key={i} className={`plan-step ${i < currentStep ? 'done' : i === currentStep ? 'active' : 'pending'}`}>
                             <span className="step-indicator">
-                                {i < currentStep ? '✅' : i === currentStep ? '⚡' : '○'}
+                                {i < currentStep ? '✅' : i === currentStep ? (isRunning ? '⚡' : '⏸️') : '○'}
                             </span>
-                            <div className="step-content">
-                                <span className="step-text">{step.step}. {step.action}</span>
-                                <span className="step-file">{step.file}</span>
-                            </div>
+                            <span className="step-text">{step.stepNumber}. {step.description}</span>
                         </div>
                     ))}
                 </div>
             )}
 
             {/* Action buttons */}
-            {agentState === 'ready' && (
+            {isWaiting && (
                 <div className="agent-actions">
-                    <button className="agent-approve-btn" onClick={executeNextStep}>
-                        ▶ Execute Step {currentStep + 2}
-                    </button>
+                    <button className="agent-approve-btn" onClick={approve}>✅ Approve & Continue</button>
+                    <button className="agent-skip-btn" onClick={skip}>⏭️ Skip Step</button>
                     <button className="agent-abort-btn" onClick={abort}>🛑 Abort</button>
                 </div>
             )}
-            {(agentState === 'complete' || agentState === 'aborted') && (
-                <div className="agent-actions">
-                    <button className="agent-approve-btn" onClick={reset}>↩ New Task</button>
-                </div>
-            )}
-            {(agentState === 'executing' || agentState === 'planning') && (
+            {isRunning && (
                 <div className="agent-actions">
                     <button className="agent-abort-btn" onClick={abort}>🛑 Abort</button>
                 </div>
             )}
 
-            {/* Log */}
+            {/* Log output */}
             <div className="agent-log">
-                {logs.length === 0 && agentState === 'idle' && (
-                    <div className="agent-log-empty">
-                        <div>Describe your goal above and click <strong>Start Agent</strong>.</div>
-                        <div style={{ marginTop: 8, opacity: 0.6, fontSize: 12 }}>
-                            The agent will plan the work, then walk you through each step using your AI chatbot.
-                        </div>
-                    </div>
-                )}
                 {logs.map((entry, i) => (
                     <div key={i} className={`log-entry log-${entry.type}`}>
-                        <span className="log-time">{entry.time}</span>
+                        <span className="log-time">{entry.timestamp?.substring(11, 19)}</span>
+                        <span className="log-type">[{entry.type}]</span>
                         <span className="log-msg">{entry.message}</span>
                     </div>
                 ))}
